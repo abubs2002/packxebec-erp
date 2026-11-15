@@ -115,7 +115,11 @@ def init_db():
         ("seo_title", "packxebec | Custom Packaging & Box Manufacturer in BD"),
         ("seo_keywords", "300 GSM Swedish Board, Custom Box Dhaka, Packaging Printing"),
         ("seo_desc", "Order custom printed packaging boxes with instant quotation."),
-        ("factory_phone", "01XXXXXXXXX"),
+        ("factory_phone", "+880 17XX-XXXXXX"),
+        ("fb_page_url", "https://www.facebook.com/packxebec"),
+        ("fb_messenger_url", "https://m.me/packxebec"),
+        ("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)"),
+        ("factory_email", "contact@packxebec.com"),
         ("enable_customer_login", "1"),
         ("admin_password", "admin123")
     ]
@@ -323,7 +327,7 @@ def to_bn_num(val):
     bn = "০১২৩৪৫৬৭৮৯"
     return str(val).translate(str.maketrans(en, bn))
 
-# সেশন স্টেট ও ভাষা হেল্পার (TR & Option Formatter)
+# সেশন স্টেট ও ভাষা হেল্পার
 if "lang_mode" not in st.session_state:
     st.session_state.lang_mode = "BN"
 if "sel_box_type" not in st.session_state:
@@ -359,7 +363,6 @@ def fmt_opt(val):
     }
     if s in rep_map:
         return rep_map[s]
-    # কাস্টম কোনো অপশনের ব্র্যাকেটে বাংলা থাকলে ইংরেজি মোডে তা ক্লিন করে দেখাবে
     cleaned = re.sub(r"\s*\([^)]*[\u0980-\u09FF]+[^)]*\)", "", s).strip()
     return cleaned if cleaned else s
 
@@ -408,7 +411,7 @@ DARK_LOGO_PARTS = [
 LOGO_SRC = svg_to_b64("".join(DARK_LOGO_PARTS))
 
 # ==========================================================
-# ৩. COMPACT LOGO & ZOOMABLE PRODUCT CARDS CSS
+# ৩. COMPACT LOGO, SOCIAL BUTTONS & ZOOMABLE PRODUCT CARDS CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -467,6 +470,27 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 }
 .hero-logo-img:hover {
     transform: scale(1.05);
+}
+
+.social-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(37, 99, 235, 0.18);
+    color: #60a5fa !important;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    text-decoration: none !important;
+    margin: 4px 5px;
+    transition: all 0.2s ease;
+}
+.social-pill:hover {
+    background: #2563eb;
+    color: #ffffff !important;
+    transform: translateY(-2px);
 }
 
 .dark-glass-card {
@@ -663,6 +687,13 @@ mat_options = list(mat_dict.keys())
 finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
+# কন্টাক্ট ও ফেসবুক ডাটা লোড
+fb_url = get_stat("fb_page_url", "https://www.facebook.com/packxebec")
+msg_url = get_stat("fb_messenger_url", "https://m.me/packxebec")
+fac_phone = get_stat("factory_phone", "+880 17XX-XXXXXX")
+fac_addr = get_stat("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)")
+fac_email = get_stat("factory_email", "contact@packxebec.com")
+
 # ==========================================================
 # ৪. TOP LANGUAGE SWITCHER + COMPACT BRAND LOGO HEADER
 # ==========================================================
@@ -686,8 +717,11 @@ st.markdown(
     f'<div style="color:#cbd5e1; font-size:0.9rem; font-weight:500; margin-bottom:8px;">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
-    f'<div>'
+    f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px;">'
     f'<span class="live-badge">● Online Ordering Active</span>'
+    f'<a href="{fb_url}" target="_blank" class="social-pill">📘 fb.com/packxebec</a>'
+    f'<a href="{msg_url}" target="_blank" class="social-pill">💬 Messenger Chat</a>'
+    f'<span class="social-pill">📞 {fac_phone}</span>'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True
@@ -1045,6 +1079,22 @@ if not st.session_state.admin_logged_in:
             unsafe_allow_html=True
         )
 
+        # ডান পাশে সরাসরি কন্টাক্ট ও ফেসবুক পেজ কার্ড
+        st.markdown(
+            f'<div class="dark-glass-card" style="padding:18px 22px;">'
+            f'<div style="font-size:0.98rem; font-weight:800; color:#60a5fa; margin-bottom:10px;">'
+            f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
+            f'</div>'
+            f'<div style="font-size:0.86rem; color:#e2e8f0; line-height:1.7;">'
+            f'<div>📘 <b>Facebook Page:</b> <a href="{fb_url}" target="_blank" style="color:#f472b6; text-decoration:none; font-weight:700;">facebook.com/packxebec ↗</a></div>'
+            f'<div>💬 <b>Direct Inbox:</b> <a href="{msg_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">m.me/packxebec ↗</a></div>'
+            f'<div>📞 <b>Hotline / WhatsApp:</b> <span style="color:#4ade80; font-weight:700;">{fac_phone}</span></div>'
+            f'<div>✉️ <b>Email:</b> {fac_email}</div>'
+            f'<div>🏢 <b>{tr("ঠিকানা:", "Address:")}</b> {fac_addr}</div>'
+            f'</div></div>',
+            unsafe_allow_html=True
+        )
+
 # ==========================================================
 # PART B: ADMIN BACKEND
 # ==========================================================
@@ -1071,7 +1121,7 @@ else:
         tr("✨ প্রোডাক্টের আগ্রহ (Interest)", "✨ Product Interest & Clicks"),
         tr("🔍 সার্চ (Search)", "🔍 Global Search"),
         tr("🌐 এসইও (SEO)", "🌐 SEO Configuration"),
-        tr("⚙️ সেটিংস ও পাসওয়ার্ড পরিবর্তন (Settings & Security)", "⚙️ Settings & Admin Security")
+        tr("⚙️ সেটিংস, ঠিকানা ও পাসওয়ার্ড (Settings & Security)", "⚙️ Settings, Address & Security")
     ]
 
     admin_page = st.selectbox(tr("🧭 ব্যাকএন্ড মেনু সিলেক্ট করুন:", "🧭 Select Backend Menu:"), menu_items)
@@ -1341,21 +1391,29 @@ else:
                 st.success(tr("✅ এসইও কনফিগারেশন সেভ হয়েছে!", "✅ SEO configuration saved!"))
 
     elif "Settings" in admin_page or "সেটিংস" in admin_page:
-        st.markdown(tr("### ⚙️ সিস্টেম সেটিংস ও অ্যাডমিন পাসওয়ার্ড পরিবর্তন", "### ⚙️ System Settings & Change Admin Password"))
+        st.markdown(tr("### ⚙️ কোম্পানির ঠিকানা, ফেসবুক পেজ ও পাসওয়ার্ড সেটিংস", "### ⚙️ Company Address, Facebook Page & Security Settings"))
         set_col1, set_col2 = st.columns(2, gap="large")
 
         with set_col1:
-            st.markdown(tr("#### 🛠️ জেনারেল ও কাস্টমার লগইন সেটিংস", "#### 🛠️ General & Customer Login Settings"))
+            st.markdown(tr("#### 📍 কোম্পানির তথ্য ও ফেসবুক পেজ লিংক", "#### 📍 Company Details & Facebook Links"))
             with st.form("sys_settings"):
                 cur_login_state = get_stat("enable_customer_login", "1") == "1"
                 toggle_login = st.checkbox(tr("কাস্টমার পেজে 'মেম্বার লগইন' অপশন চালু রাখুন", "Enable 'Member Login' on Customer Page"), value=cur_login_state)
-                f_phn = st.text_input(tr("ফ্যাক্টরি হটলাইন নম্বর", "Factory Hotline Number"), value=get_stat("factory_phone"))
+                f_phn = st.text_input(tr("ফ্যাক্টরি হটলাইন / হোয়াটসঅ্যাপ নম্বর", "Factory Hotline / WhatsApp"), value=fac_phone)
+                f_fb = st.text_input(tr("ফেসবুক পেজ লিংক", "Facebook Page URL"), value=fb_url)
+                f_msg = st.text_input(tr("মেসেঞ্জার ডিরেক্ট চ্যাট লিংক", "Messenger Direct URL"), value=msg_url)
+                f_eml = st.text_input(tr("ইমেইল", "Official Email"), value=fac_email)
+                f_adr = st.text_area(tr("ফ্যাক্টরি ও অফিসের ঠিকানা", "Factory & Office Address"), value=fac_addr, height=70)
                 ord_clk = st.number_input(tr("মেসেঞ্জার/কল ট্যাপ কাউন্টার", "Customize/Call Tap Counter"), value=int(ord_clicks))
-                if st.form_submit_button(tr("💾 জেনারেল সেটিংস সেভ করুন", "💾 Save General Settings")):
+                if st.form_submit_button(tr("💾 তথ্য সেভ করুন", "💾 Save Company Info")):
                     set_stat("enable_customer_login", "1" if toggle_login else "0")
                     set_stat("factory_phone", f_phn)
+                    set_stat("fb_page_url", f_fb)
+                    set_stat("fb_messenger_url", f_msg)
+                    set_stat("factory_email", f_eml)
+                    set_stat("factory_address", f_adr)
                     set_stat("order_clicks", ord_clk)
-                    st.success(tr("✅ সেটিংস সফলভাবে আপডেট হয়েছে!", "✅ Settings updated successfully!"))
+                    st.success(tr("✅ কোম্পানির তথ্য সফলভাবে আপডেট হয়েছে!", "✅ Company info updated successfully!"))
                     st.rerun()
 
         with set_col2:
@@ -1378,12 +1436,19 @@ else:
                         st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
 
 # ==========================================================
-# ৬. DISCREET FOOTER STAFF LOGIN
+# ৬. OFFICIAL BRAND FOOTER & STAFF PORTAL
 # ==========================================================
-st.markdown("<hr style='margin:40px 0 15px 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:40px 0 18px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 f_col1, f_col2 = st.columns([3, 1])
 with f_col1:
-    st.caption("© 2026 packxebec Custom Packaging Studio • 300 GSM Swedish Board Specialist")
+    st.markdown(
+        f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.6;">'
+        f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • 300 GSM Swedish Board Specialist<br>'
+        f'📍 {fac_addr} &nbsp;|&nbsp; 📞 <b style="color:#4ade80;">{fac_phone}</b> &nbsp;|&nbsp; '
+        f'📘 <a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none;">facebook.com/packxebec</a>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 with f_col2:
     if not st.session_state.admin_logged_in:
         with st.expander("🔐 Staff ERP Portal"):
