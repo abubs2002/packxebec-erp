@@ -115,7 +115,8 @@ def init_db():
         ("seo_title", "packxebec | Custom Packaging & Box Manufacturer in BD"),
         ("seo_keywords", "300 GSM Swedish Board, Custom Box Dhaka, Packaging Printing"),
         ("seo_desc", "Order custom printed packaging boxes with instant quotation."),
-        ("factory_phone", "+880 17XX-XXXXXX"),
+        ("factory_phone", "01776008987"),
+        ("whatsapp_number", "01776008987"),
         ("fb_page_url", "https://www.facebook.com/packxebec"),
         ("fb_messenger_url", "https://m.me/packxebec"),
         ("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)"),
@@ -126,6 +127,12 @@ def init_db():
     c.executemany(
         "INSERT OR IGNORE INTO site_stats VALUES (?, ?)",
         default_stats
+    )
+
+    # আগে পুরনো প্লেসহোল্ডার নম্বর সেভ থাকলে তা অটোমেটিক আসল নম্বরে আপডেট করে দেওয়া
+    c.execute(
+        "UPDATE site_stats SET stat_val='01776008987' "
+        "WHERE stat_key='factory_phone' AND stat_val IN ('01XXXXXXXXX', '+880 17XX-XXXXXX')"
     )
 
     c.execute("SELECT COUNT(*) FROM custom_options")
@@ -687,10 +694,10 @@ mat_options = list(mat_dict.keys())
 finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
-# কন্টাক্ট ও ফেসবুক ডাটা লোড
+# কন্টাক্ট ও ফেসবুক ডাটা লোড (ডিফল্ট 01776008987)
 fb_url = get_stat("fb_page_url", "https://www.facebook.com/packxebec")
 msg_url = get_stat("fb_messenger_url", "https://m.me/packxebec")
-fac_phone = get_stat("factory_phone", "+880 17XX-XXXXXX")
+fac_phone = get_stat("factory_phone", "01776008987")
 fac_addr = get_stat("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
@@ -720,8 +727,8 @@ st.markdown(
     f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px;">'
     f'<span class="live-badge">● Online Ordering Active</span>'
     f'<a href="{fb_url}" target="_blank" class="social-pill">📘 fb.com/packxebec</a>'
-    f'<a href="{msg_url}" target="_blank" class="social-pill">💬 Messenger Chat</a>'
-    f'<span class="social-pill">📞 {fac_phone}</span>'
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">💬 WhatsApp: {fac_phone}</a>'
+    f'<a href="tel:{fac_phone}" class="social-pill">📞 Call: {fac_phone}</a>'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True
@@ -1079,22 +1086,6 @@ if not st.session_state.admin_logged_in:
             unsafe_allow_html=True
         )
 
-        # ডান পাশে সরাসরি কন্টাক্ট ও ফেসবুক পেজ কার্ড
-        st.markdown(
-            f'<div class="dark-glass-card" style="padding:18px 22px;">'
-            f'<div style="font-size:0.98rem; font-weight:800; color:#60a5fa; margin-bottom:10px;">'
-            f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
-            f'</div>'
-            f'<div style="font-size:0.86rem; color:#e2e8f0; line-height:1.7;">'
-            f'<div>📘 <b>Facebook Page:</b> <a href="{fb_url}" target="_blank" style="color:#f472b6; text-decoration:none; font-weight:700;">facebook.com/packxebec ↗</a></div>'
-            f'<div>💬 <b>Direct Inbox:</b> <a href="{msg_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">m.me/packxebec ↗</a></div>'
-            f'<div>📞 <b>Hotline / WhatsApp:</b> <span style="color:#4ade80; font-weight:700;">{fac_phone}</span></div>'
-            f'<div>✉️ <b>Email:</b> {fac_email}</div>'
-            f'<div>🏢 <b>{tr("ঠিকানা:", "Address:")}</b> {fac_addr}</div>'
-            f'</div></div>',
-            unsafe_allow_html=True
-        )
-
 # ==========================================================
 # PART B: ADMIN BACKEND
 # ==========================================================
@@ -1436,14 +1427,32 @@ else:
                         st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
 
 # ==========================================================
-# ৬. OFFICIAL BRAND FOOTER & STAFF PORTAL
+# ৬. BOTTOM CONTACT CARD, LICENSE FOOTER & STAFF PORTAL
 # ==========================================================
-st.markdown("<hr style='margin:40px 0 18px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:40px 0 22px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+
+# একদম নিচে লাইসেন্সের সাথে সরাসরি যোগাযোগ ও অফিসিয়াল পেজ কার্ড
+st.markdown(
+    f'<div class="dark-glass-card" style="padding:20px 24px; margin-bottom:18px;">'
+    f'<div style="font-size:1.05rem; font-weight:800; color:#60a5fa; margin-bottom:10px;">'
+    f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
+    f'</div>'
+    f'<div style="font-size:0.9rem; color:#e2e8f0; line-height:1.8;">'
+    f'<div>📘 <b>Facebook Page:</b> <a href="{fb_url}" target="_blank" style="color:#f472b6; text-decoration:none; font-weight:700;">facebook.com/packxebec ↗</a></div>'
+    f'<div>💬 <b>Direct Inbox:</b> <a href="{msg_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">m.me/packxebec ↗</a> &nbsp;|&nbsp; '
+    f'🟢 <b>WhatsApp Chat:</b> <a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">wa.me/88{fac_phone} ↗</a></div>'
+    f'<div>📞 <b>Hotline / WhatsApp / Real Number:</b> <a href="tel:{fac_phone}" style="color:#4ade80; text-decoration:none; font-weight:800;">{fac_phone}</a></div>'
+    f'<div>✉️ <b>Email:</b> {fac_email}</div>'
+    f'<div>🏢 <b>{tr("ঠিকানা:", "Address:")}</b> {fac_addr}</div>'
+    f'</div></div>',
+    unsafe_allow_html=True
+)
+
 f_col1, f_col2 = st.columns([3, 1])
 with f_col1:
     st.markdown(
         f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.6;">'
-        f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • 300 GSM Swedish Board Specialist<br>'
+        f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
         f'📍 {fac_addr} &nbsp;|&nbsp; 📞 <b style="color:#4ade80;">{fac_phone}</b> &nbsp;|&nbsp; '
         f'📘 <a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none;">facebook.com/packxebec</a>'
         f'</div>',
