@@ -122,7 +122,15 @@ def init_db():
         ("factory_address", "102 Agasadek Road, Dhaka-1000"),
         ("factory_email", "contact@packxebec.com"),
         ("enable_customer_login", "1"),
-        ("admin_password", "admin123")
+        ("admin_password", "admin123"),
+        # বাজার দর ওঠানামা নিয়ন্ত্রণের নতুন ব্যাকএন্ড ভেরিয়েবল
+        ("board_market_adj_pct", "0.0"),       # বোর্ড, ফ্লুট ও পেপারের বাজার দর হ্রাস/বৃদ্ধি (%)
+        ("lam_market_adj_pct", "0.0"),         # ল্যামিনেশন আইটেমের বাজার দর হ্রাস/বৃদ্ধি (%)
+        ("base_making_cost", "1.50"),          # প্রতি বক্সের বেস মেকিং ও পেস্টিং খরচ (BDT)
+        ("wastage_Allowance", "1.25"),         # শিট ওয়েস্টেজ ও ফ্ল্যাপ মাল্টিপ্লায়ার
+        ("margin_under_1k", "35.0"),           # ১০০০ পিসের নিচে প্রফিট মার্জিন (%)
+        ("margin_under_3k", "25.0"),           # ১০০০-২৯৯৯ পিসে প্রফিট মার্জিন (%)
+        ("margin_bulk_3k", "18.0")             # ৩০০০+ পিসে প্রফিট মার্জিন (%)
     ]
     c.executemany(
         "INSERT OR IGNORE INTO site_stats VALUES (?, ?)",
@@ -138,30 +146,36 @@ def init_db():
         "WHERE stat_key='factory_address' AND stat_val LIKE 'Dhaka, Bangladesh%'"
     )
 
-    c.execute("SELECT COUNT(*) FROM custom_options")
-    if c.fetchone()[0] == 0:
-        default_opts = [
-            ("box_type", "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)", 0.0),
-            ("box_type", "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", 0.0),
-            ("box_type", "Food / Sweet Packaging Box", 0.0),
-            ("box_type", "Rigid Luxury Gift Box", 0.0),
-            ("material", "300 GSM Swedish Board (Best Seller)", 0.045),
-            ("material", "350 GSM Art Card", 0.052),
-            ("material", "280 GSM Duplex Board", 0.032),
-            ("material", "E-Flute Corrugated Board", 0.060),
-            ("finish", "Glossy Lamination (গ্লসি ফিনিশ)", 0.015),
-            ("finish", "Matte Lamination (ম্যাট ফিনিশ)", 0.018),
-            ("finish", "Spot UV + Matte Coating", 0.025),
-            ("finish", "No Lamination", 0.0),
-            ("printing", "4 Color (CMYK Full Print)", 2500.0),
-            ("printing", "Single Color Brand Print", 1200.0),
-            ("printing", "No Print (Plain Box)", 500.0),
-        ]
-        c.executemany(
-            "INSERT OR IGNORE INTO custom_options "
-            "(category, option_name, rate) VALUES (?, ?, ?)",
-            default_opts
-        )
+    # সকল বোর্ড, ফ্লুট পেপার, করুগেটেড শিট, ডুপ্লেক্স বোর্ড এবং ল্যামিনেশন অপশন নিশ্চিত করা
+    default_opts = [
+        ("box_type", "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)", 0.0),
+        ("box_type", "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", 0.50),
+        ("box_type", "Food / Sweet Packaging Box", 0.20),
+        ("box_type", "Rigid Luxury Gift Box", 3.50),
+        ("box_type", "Corrugated Master Carton / Shipping Box", 1.00),
+        ("material", "300 GSM Swedish Board (Best Seller)", 0.045),
+        ("material", "350 GSM Art Card", 0.052),
+        ("material", "280 GSM Duplex Board", 0.032),
+        ("material", "300 GSM Duplex Board (Grey Back)", 0.036),
+        ("material", "E-Flute Corrugated Board", 0.060),
+        ("material", "B-Flute 3-Ply Corrugated Sheet", 0.055),
+        ("material", "5-Ply Heavy Duty Corrugated Sheet", 0.085),
+        ("material", "Kraft / Flute Paper (150-250 GSM)", 0.030),
+        ("finish", "Glossy Lamination (গ্লসি ফিনিশ)", 0.015),
+        ("finish", "Matte Lamination (ম্যাট ফিনিশ)", 0.018),
+        ("finish", "Spot UV + Matte Coating", 0.025),
+        ("finish", "Thermal BOPP Foil Lamination", 0.022),
+        ("finish", "Silver / Gold Metallic Foil Finish", 0.030),
+        ("finish", "No Lamination", 0.0),
+        ("printing", "4 Color (CMYK Full Print)", 2500.0),
+        ("printing", "Single Color Brand Print", 1200.0),
+        ("printing", "No Print (Plain Box)", 500.0),
+    ]
+    c.executemany(
+        "INSERT OR IGNORE INTO custom_options "
+        "(category, option_name, rate) VALUES (?, ?, ?)",
+        default_opts
+    )
 
     c.execute("SELECT COUNT(*) FROM catalog")
     if c.fetchone()[0] == 0:
@@ -176,13 +190,13 @@ def init_db():
 
         default_catalog = [
             ("১২ x ৯ x ৪ কাস্টম ডাই-কাট বক্স", "PX-101 • E-Flute Kraft", u1,
-             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "E-Flute Corrugated Board",
+             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "E-Flute Corrugated Board",
              "No Lamination", "Single Color Brand Print", 12.0, 9.0, 4.0, 58),
             ("300 GSM Swedish Tuck Box", "PX-102 • Custom Brand Print", u2,
              "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)", "300 GSM Swedish Board (Best Seller)",
              "Glossy Lamination (গ্লসি ফিনিশ)", "4 Color (CMYK Full Print)", 4.5, 4.5, 5.5, 44),
             ("Silver Foil Metallic Mailer", "PX-103 • Silver Art Card", u3,
-             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "350 GSM Art Card",
+             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "350 GSM Art Card",
              "Glossy Lamination (গ্লসি ফিনিশ)", "4 Color (CMYK Full Print)", 7.0, 5.0, 2.5, 31),
             ("Silver Roll-End Tuck Box", "PX-104 • Premium Metallic", u4,
              "Food / Sweet Packaging Box", "300 GSM Swedish Board (Best Seller)",
@@ -227,7 +241,7 @@ def init_db():
              6000, 12.5, 75000.0, 3500.0, 60000.0, 15000.0, 54000.0, 21000.0,
              "aarong_box_die.pdf", "Urgent Glossy Batch", "Delivered"),
             ("PX-1102", "2026-11-12 15:40", "Glow Cosmetics BD", "01819000002",
-             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "350 GSM Art Card",
+             "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "350 GSM Art Card",
              "7.0x5.0x2.5", "Matte Lamination (ম্যাট ফিনিশ)", "4 Color (CMYK Full Print)",
              2000, 16.2, 32400.0, 0.0, 19700.0, 12700.0, 23500.0, 8900.0,
              "glow_logo_ai.png", "Logo on top flap", "In Printing"),
@@ -266,10 +280,16 @@ def set_stat(key, val):
 
 def get_options_dict(category):
     conn = get_conn()
-    q = "SELECT option_name, rate FROM custom_options WHERE category=?"
+    q = "SELECT option_name, rate FROM custom_options WHERE category=? ORDER BY id ASC"
     df = pd.read_sql_query(q, conn, params=(category,))
     conn.close()
     return dict(zip(df["option_name"], df["rate"]))
+
+def get_all_options_df():
+    conn = get_conn()
+    df = pd.read_sql_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category, id ASC", conn)
+    conn.close()
+    return df
 
 def get_catalog_df():
     conn = get_conn()
@@ -367,7 +387,7 @@ def fmt_opt(val):
     rep_map = {
         "১২ x ৯ x ৪ কাস্টম ডাই-কাট বক্স": "12 x 9 x 4 Custom Die-Cut Box",
         "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)": "Tuck End Box (Swedish Board Standard)",
-        "Mailer Box (ই-কমার্স প্রিমিয়াম লক)": "Mailer Box (E-Commerce Premium Lock)",
+        "Mailer Box (ই-কমার্স প্রিমিয়াম লক)": "Mailer Box (E-Commerce Premium Lock)",
         "Glossy Lamination (গ্লসি ফিনিশ)": "Glossy Lamination",
         "Matte Lamination (ম্যাট ফিনিশ)": "Matte Lamination"
     }
@@ -471,7 +491,7 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 
-/* ওয়েবসাইটের ওপরের GitHub আইকন, Share বাটন, Edit ও Streamlit মেনু সম্পূর্ণ লুকানোর কোড */
+/* ওয়েবসাইটের ওপরের GitHub আইকন, Share বাটন, Edit ও Streamlit মেনু সম্পূর্ণ লুকানোর কোড */
 [data-testid="stToolbar"],
 [data-testid="stToolbarActions"],
 [data-testid="stHeaderActionElements"],
@@ -805,6 +825,18 @@ fac_phone = get_stat("factory_phone", "01776008987")
 fac_addr = get_stat("factory_address", "102 Agasadek Road, Dhaka-1000")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
+# বাজার দর ওঠানামার ডাইনামিক ভেরিয়েবল লোড (Backend Market Multipliers)
+board_market_adj_pct = float(get_stat("board_market_adj_pct", "0.0"))
+lam_market_adj_pct = float(get_stat("lam_market_adj_pct", "0.0"))
+base_making_cost_val = float(get_stat("base_making_cost", "1.50"))
+wastage_allowance_val = float(get_stat("wastage_Allowance", "1.25"))
+margin_u1k = float(get_stat("margin_under_1k", "35.0"))
+margin_u3k = float(get_stat("margin_under_3k", "25.0"))
+margin_b3k = float(get_stat("margin_bulk_3k", "18.0"))
+
+board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
+lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
+
 # ==========================================================
 # ৪. BRAND LOGO & TITLE BANNER + LANGUAGE SWITCHER DIRECTLY UNDERNEATH
 # ==========================================================
@@ -875,16 +907,16 @@ if not st.session_state.admin_logged_in:
                 if not my_ords.empty:
                     st.dataframe(my_ords, use_container_width=True)
         else:
-            with st.expander(tr("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন / পাসওয়ার্ড রিসেট", "👤 Customer Member Login / Register / Reset Password"), expanded=False):
+            with st.expander(tr("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন / পাসওয়ার্ড রিসেট", "👤 Customer Member Login / Register / Reset Password"), expanded=False):
                 auth_tab1, auth_tab2, auth_tab3 = st.tabs([
                     tr("🔑 মেম্বার লগইন", "🔑 Member Login"),
                     tr("➕ নতুন অ্যাকাউন্ট", "➕ Create Account"),
-                    tr("🔄 পাসওয়ার্ড ভুলে গেছেন?", "🔄 Forgot Password?")
+                    tr("🔄 পাসওয়ার্ড ভুলে গেছেন?", "🔄 Forgot Password?")
                 ])
                 with auth_tab1:
                     l_c1, l_c2 = st.columns(2)
                     l_phone = l_c1.text_input(tr("মোবাইল নম্বর", "Mobile Number"), placeholder="01XXXXXXXXX", key="lp")
-                    l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", key="lps")
+                    l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", key="lps")
                     if st.button(tr("লগইন করুন", "Login"), key="lbtn"):
                         conn = get_conn()
                         c = conn.cursor()
@@ -899,13 +931,13 @@ if not st.session_state.admin_logged_in:
                             }
                             st.rerun()
                         else:
-                            st.error(tr("❌ মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।", "❌ Invalid mobile number or password."))
+                            st.error(tr("❌ মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।", "❌ Invalid mobile number or password."))
 
                 with auth_tab2:
                     r_c1, r_c2, r_c3 = st.columns(3)
                     r_name = r_c1.text_input(tr("আপনার নাম / ব্র্যান্ডের নাম", "Your Name / Brand Name"), key="rn")
                     r_phone = r_c2.text_input(tr("মোবাইল নম্বর", "Mobile Number"), key="rp")
-                    r_pass = r_c3.text_input(tr("পাসওয়ার্ড সেট করুন", "Set Password"), type="password", key="rps")
+                    r_pass = r_c3.text_input(tr("পাসওয়ার্ড সেট করুন", "Set Password"), type="password", key="rps")
                     if st.button(tr("অ্যাকাউন্ট তৈরি করুন", "Create Account"), key="rbtn"):
                         if r_name.strip() and r_phone.strip() and r_pass.strip():
                             conn = get_conn()
@@ -923,8 +955,8 @@ if not st.session_state.admin_logged_in:
                 with auth_tab3:
                     fp_c1, fp_c2 = st.columns(2)
                     fp_phone = fp_c1.text_input(tr("আপনার রেজিস্টার্ড মোবাইল নম্বর", "Your Registered Mobile Number"), key="fpp")
-                    fp_new_pass = fp_c2.text_input(tr("নতুন পাসওয়ার্ড সেট করুন", "Set New Password"), type="password", key="fpnp")
-                    if st.button(tr("🔄 পাসওয়ার্ড রিসেট করুন", "🔄 Reset Password"), key="fpbtn"):
+                    fp_new_pass = fp_c2.text_input(tr("নতুন পাসওয়ার্ড সেট করুন", "Set New Password"), type="password", key="fpnp")
+                    if st.button(tr("🔄 পাসওয়ার্ড রিসেট করুন", "🔄 Reset Password"), key="fpbtn"):
                         if fp_phone.strip() and len(fp_new_pass.strip()) >= 3:
                             conn = get_conn()
                             c = conn.cursor()
@@ -933,12 +965,12 @@ if not st.session_state.admin_logged_in:
                             if row:
                                 conn.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
                                 conn.commit()
-                                st.success(tr("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।", "✅ Password reset successfully! Please login from the Member Login tab."))
+                                st.success(tr("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।", "✅ Password reset successfully! Please login from the Member Login tab."))
                             else:
-                                st.error(tr("❌ এই মোবাইল নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।", "❌ No account found with this mobile number."))
+                                st.error(tr("❌ এই মোবাইল নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।", "❌ No account found with this mobile number."))
                             conn.close()
                         else:
-                            st.warning(tr("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।", "Enter mobile number and a password of at least 3 characters."))
+                            st.warning(tr("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।", "Enter mobile number and a password of at least 3 characters."))
 
     st.markdown(tr("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)", "### 🖼️ 1. Real Product Sample Gallery (Click to Customize)"))
     catalog_df = get_catalog_df()
@@ -992,7 +1024,7 @@ if not st.session_state.admin_logged_in:
             b_idx = box_options.index(st.session_state.sel_box_type) if st.session_state.sel_box_type in box_options else 0
             m_idx = mat_options.index(st.session_state.sel_material) if st.session_state.sel_material in mat_options else 0
             box_type = st.selectbox(tr("বক্সের ধরন (Box Style)", "Box Style"), box_options, index=b_idx, format_func=fmt_opt)
-            material = st.selectbox(tr("ম্যাটেরিয়াল (Board Grade)", "Material (Board Grade)"), mat_options, index=m_idx, format_func=fmt_opt)
+            material = st.selectbox(tr("ম্যাটেরিয়াল (Board / Flute / Duplex / Corrugated)", "Material (Board / Flute / Duplex / Corrugated)"), mat_options, index=m_idx, format_func=fmt_opt)
             c1, c2, c3 = st.columns(3)
             length = c1.number_input(tr("দৈর্ঘ্য (Length)", "Length (Inches)"), min_value=1.0, max_value=40.0, value=float(st.session_state.sel_dims[0]), step=0.5)
             width = c2.number_input(tr("প্রস্থ (Width)", "Width (Inches)"), min_value=1.0, max_value=40.0, value=float(st.session_state.sel_dims[1]), step=0.5)
@@ -1035,15 +1067,15 @@ if not st.session_state.admin_logged_in:
                 ))
 
             opt_exact = tr(
-                "✅ আগের হুবহু সাইজ ও আগের প্রিন্টিং ডিজাইন (ডাই ও প্লেট চার্জ সম্পূর্ণ ফ্রি + ৫% ছাড়)",
+                "✅ আগের হুবহু সাইজ ও আগের প্রিন্টিং ডিজাইন (ডাই ও প্লেট চার্জ সম্পূর্ণ ফ্রি + ৫% ছাড়)",
                 "✅ Exact Previous Size & Print Design (100% Free Die & Plate Setup + 5% Discount)"
             )
             opt_same_sz = tr(
-                "🎨 বক্সের সাইজ আগেরটাই, কিন্তু প্রিন্টিং ডিজাইন/লোগো চেঞ্জ হবে (ডাই ফ্রি, তবে নতুন প্লেট চার্জ লাগবে + ৩% ছাড়)",
+                "🎨 বক্সের সাইজ আগেরটাই, কিন্তু প্রিন্টিং ডিজাইন/লোগো চেঞ্জ হবে (ডাই ফ্রি, তবে নতুন প্লেট চার্জ লাগবে + ৩% ছাড়)",
                 "🎨 Same Box Size, New Printing Design/Logo (Free Die, New Plate Charge Applies + 3% Discount)"
             )
             opt_new_all = tr(
-                "📐 বক্সের সাইজ এবং প্রিন্টিং ডিজাইন দুটোই নতুন (নতুন ডাই ও নতুন প্লেট লাগবে, শুধু ৩% লয়্যালটি ছাড়)",
+                "📐 বক্সের সাইজ এবং প্রিন্টিং ডিজাইন দুটোই নতুন (নতুন ডাই ও নতুন প্লেট লাগবে, শুধু ৩% লয়্যালটি ছাড়)",
                 "📐 New Box Size & New Print Design (New Die & Plate Required, 3% Member Loyalty Discount)"
             )
 
@@ -1055,13 +1087,13 @@ if not st.session_state.admin_logged_in:
 
             if rep_choice == opt_exact:
                 repeat_mode = "exact_repeat"
-                discount_reason = tr("ডাই ও প্রিন্টিং প্লেট চার্জ মওকুফ + ৫% রিপিট ছাড়", "Die & Plate Setup Waived + 5% Repeat Discount")
+                discount_reason = tr("ডাই ও প্রিন্টিং প্লেট চার্জ মওকুফ + ৫% রিপিট ছাড়", "Die & Plate Setup Waived + 5% Repeat Discount")
             elif rep_choice == opt_same_sz:
                 repeat_mode = "same_size_new_design"
-                discount_reason = tr("আগের ডাই ফ্রি (নতুন ডিজাইন প্লেট চার্জ যুক্ত) + ৩% ছাড়", "Saved Die Free (New Design Plate Added) + 3% Discount")
+                discount_reason = tr("আগের ডাই ফ্রি (নতুন ডিজাইন প্লেট চার্জ যুক্ত) + ৩% ছাড়", "Saved Die Free (New Design Plate Added) + 3% Discount")
             else:
                 repeat_mode = "new_size_new_design"
-                discount_reason = tr("নতুন সাইজ ও ডিজাইন (ডাই ও প্লেট চার্জ যুক্ত), ৩% মেম্বার লয়্যালটি ছাড়", "New Size & Design (Die & Plate Added) + 3% Loyalty Discount")
+                discount_reason = tr("নতুন সাইজ ও ডিজাইন (ডাই ও প্লেট চার্জ যুক্ত), ৩% মেম্বার লয়্যালটি ছাড়", "New Size & Design (Die & Plate Added) + 3% Loyalty Discount")
 
         design_upload = st.file_uploader(
             tr("📂 আপনার বক্সের ডিজাইন / নতুন লোগো ফাইল যুক্ত করুন (.pdf, .ai, .psd, .png, .jpg, .zip)", "📂 Upload Your Box Design / Artwork File (.pdf, .ai, .psd, .png, .jpg, .zip)"),
@@ -1070,20 +1102,31 @@ if not st.session_state.admin_logged_in:
 
         req_opt1 = tr("অর্ডার কনফার্ম (Order)", "Confirm Order")
         req_opt2 = tr("খোলা কোটেশন (Price Quotation Only)", "Price Quotation Only")
-        req_type = st.radio(tr("রিকোয়েস্টের ধরন:", "Request Type:"), [req_opt1, req_opt2], horizontal=True)
+        req_type = st.radio(tr("রিকোয়েস্টের ধরন:", "Request Type:"), [req_opt1, req_opt2], horizontal=True)
         advance_pay = st.number_input(tr("অ্যাডভান্স পেমেন্ট (যদি থাকে - BDT)", "Advance Payment (If any - BDT)"), min_value=0.0, value=0.0, step=500.0)
-        cust_notes = st.text_area(tr("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন পরিবর্তনের নির্দেশনা (ঐচ্ছিক)", "Custom Requirements or Design Instructions (Optional)"), height=70)
+        cust_notes = st.text_area(tr("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন পরিবর্তনের নির্দেশনা (ঐচ্ছিক)", "Custom Requirements or Design Instructions (Optional)"), height=70)
 
-        surface_area = 2 * ((length * width) + (length * height) + (width * height)) * 1.25
-        board_cost = surface_area * mat_dict.get(material, 0.045)
-        lam_cost = surface_area * finish_dict.get(finish, 0.015)
-        making_cost = 1.50 + box_dict.get(box_type, 0.0)
+        # ==========================================================
+        # ডাইনামিক প্রাইসিং ইঞ্জিন (ব্যাকএন্ড বাজার দরের সাথে সংযুক্ত)
+        # ==========================================================
+        surface_area = 2 * ((length * width) + (length * height) + (width * height)) * wastage_allowance_val
+        effective_mat_rate = mat_dict.get(material, 0.045) * board_market_mult
+        effective_lam_rate = finish_dict.get(finish, 0.015) * lam_market_mult
+
+        board_cost = surface_area * effective_mat_rate
+        lam_cost = surface_area * effective_lam_rate
+        making_cost = base_making_cost_val + box_dict.get(box_type, 0.0)
 
         raw_setup_cost = print_dict.get(printing, 2500.0)
         die_making_cost = raw_setup_cost * 0.40
         plate_making_cost = raw_setup_cost * 0.60
 
-        margin = 1.35 if quantity < 1000 else (1.25 if quantity < 3000 else 1.18)
+        if quantity < 1000:
+            margin = 1.0 + (margin_u1k / 100.0)
+        elif quantity < 3000:
+            margin = 1.0 + (margin_u3k / 100.0)
+        else:
+            margin = 1.0 + (margin_b3k / 100.0)
 
         reg_unit_cost = board_cost + lam_cost + making_cost + ((die_making_cost + plate_making_cost) / quantity)
         reg_unit_price = round(reg_unit_cost * margin, 2)
@@ -1150,7 +1193,7 @@ if not st.session_state.admin_logged_in:
                 conn.commit()
                 conn.close()
                 st.success(tr(
-                    f"🎉 অর্ডার সফলভাবে সম্পন্ন হয়েছে! আপনার ট্র্যাকিং আইডি: **{order_id}**",
+                    f"🎉 অর্ডার সফলভাবে সম্পন্ন হয়েছে! আপনার ট্র্যাকিং আইডি: **{order_id}**",
                     f"🎉 Order submitted successfully! Your Tracking ID: **{order_id}**"
                 ))
 
@@ -1159,9 +1202,9 @@ if not st.session_state.admin_logged_in:
         if live_old_record and discount_saved > 0:
             discount_html = (
                 f'<div style="background:rgba(34,197,94,0.15); border:1px solid #4ade80; padding:12px 14px; border-radius:10px; margin-top:12px;">'
-                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">{tr("👑 মেম্বার অ্যাডজাস্টমেন্ট চালু হয়েছে!", "👑 Member Pricing Applied!")}</div>'
+                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">{tr("👑 মেম্বার অ্যাডজাস্টমেন্ট চালু হয়েছে!", "👑 Member Pricing Applied!")}</div>'
                 f'<div style="color:#f8fafc; font-size:0.8rem; margin:3px 0;">{tr("কারণ:", "Reason:")} {discount_reason}</div>'
-                f'<div style="color:#cbd5e1; font-size:0.82rem;">{tr("রেগুলার মূল্য:", "Regular Price:")} <del>৳ {reg_total_price:,.2f}</del> | {tr("আপনার সাশ্রয়:", "You Save:")} <b>৳ {discount_saved:,.2f}</b></div>'
+                f'<div style="color:#cbd5e1; font-size:0.82rem;">{tr("রেগুলার মূল্য:", "Regular Price:")} <del>৳ {reg_total_price:,.2f}</del> | {tr("আপনার সাশ্রয়:", "You Save:")} <b>৳ {discount_saved:,.2f}</b></div>'
                 f'</div>'
             )
 
@@ -1208,16 +1251,16 @@ else:
 
     menu_items = [
         tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard"),
+        tr("🏷️ ক্যাটাগরি ও বাজার দর (Market Rates & Materials)", "🏷️ Categories & Live Market Pricing"),
         tr("📑 অর্ডার ও কাস্টমার ফাইল (Orders & Files)", "📑 Orders & Customer Files"),
-        tr("👥 কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট (Customers)", "👥 Customer Records & Password Reset"),
+        tr("👥 কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট (Customers)", "👥 Customer Records & Password Reset"),
         tr("💳 হিসাব খাতা (Accounts & Due)", "💳 Accounts & Due Manager"),
         tr("📦 প্রোডাক্ট ও ছবি আপলোডার (Products CMS)", "📦 Products & Photo CMS"),
-        tr("🏷️ ক্যাটাগরি ও রেট (Categories)", "🏷️ Categories & Pricing Rates"),
         tr("📊 ট্রাফিক (Traffic)", "📊 Website Traffic"),
         tr("✨ প্রোডাক্টের আগ্রহ (Interest)", "✨ Product Interest & Clicks"),
         tr("🔍 সার্চ (Search)", "🔍 Global Search"),
         tr("🌐 এসইও (SEO)", "🌐 SEO Configuration"),
-        tr("⚙️ সেটিংস, ঠিকানা ও পাসওয়ার্ড (Settings & Security)", "⚙️ Settings, Address & Security")
+        tr("⚙️ সেটিংস, ঠিকানা ও পাসওয়ার্ড (Settings & Security)", "⚙️ Settings, Address & Security")
     ]
 
     admin_page = st.selectbox(tr("🧭 ব্যাকএন্ড মেনু সিলেক্ট করুন:", "🧭 Select Backend Menu:"), menu_items)
@@ -1257,16 +1300,16 @@ else:
                 f'<div class="ov-header"><span>{tr("[ মোট বাকি ]", "[ Total Due ]")}</span><span class="ov-link">{tr("হিসাব →", "Accounts →")}</span></div>'
                 f'<div class="ov-sub">{tr("কাস্টমারদের কাছে পাওনা", "Receivable from customers")}</div>'
                 f'<div class="ov-big">৳{to_bn_num(f"{total_due:,.0f}")}</div>'
-                f'<div class="ov-foot">{tr("সব কাস্টমার মিলিয়ে এখন পর্যন্ত যত টাকা বাকি।", "Total outstanding balance across all customers.")}</div>'
+                f'<div class="ov-foot">{tr("সব কাস্টমার মিলিয়ে এখন পর্যন্ত যত টাকা বাকি।", "Total outstanding balance across all customers.")}</div>'
                 f'</div>', unsafe_allow_html=True
             )
         with r1_c2:
             st.markdown(
                 f'<div class="ov-card">'
-                f'<div class="ov-header"><span>{tr("[ এই মাসে আদায় ]", "[ Collected This Month ]")}</span><span class="ov-link">{tr("হিসাব →", "Accounts →")}</span></div>'
-                f'<div class="ov-sub">{tr("হাতে পাওয়া টাকা", "Total received payments")}</div>'
+                f'<div class="ov-header"><span>{tr("[ এই মাসে আদায় ]", "[ Collected This Month ]")}</span><span class="ov-link">{tr("হিসাব →", "Accounts →")}</span></div>'
+                f'<div class="ov-sub">{tr("হাতে পাওয়া টাকা", "Total received payments")}</div>'
                 f'<div class="ov-big">৳{to_bn_num(f"{total_collected:,.0f}")}</div>'
-                f'<div class="ov-foot">{tr("এই মাসে কাস্টমারদের কাছ থেকে যত টাকা পাওয়া গেছে।", "Total payments collected from customers this month.")}</div>'
+                f'<div class="ov-foot">{tr("এই মাসে কাস্টমারদের কাছ থেকে যত টাকা পাওয়া গেছে।", "Total payments collected from customers this month.")}</div>'
                 f'</div>', unsafe_allow_html=True
             )
         with r1_c3:
@@ -1278,7 +1321,7 @@ else:
                 f'<div><div class="ov-sub">{tr("বিক্রি", "Sales")}</div><div class="ov-big" style="font-size:1.9rem;">৳{to_bn_num(f"{total_sales:,.0f}")}</div></div>'
                 f'</div>'
                 f'<div class="ov-sub" style="margin-top:4px;">{tr("খোলা কোটেশন:", "Open Quotations:")} <strong style="color:#f472b6;">{to_bn_num(quote_count)}</strong></div>'
-                f'<div class="ov-foot">{tr("দাম জানানো হয়েছে, কাস্টমার এখনো হ্যাঁ বলেননি।", "Price quoted, awaiting customer confirmation.")}</div>'
+                f'<div class="ov-foot">{tr("দাম জানানো হয়েছে, কাস্টমার এখনো হ্যাঁ বলেননি।", "Price quoted, awaiting customer confirmation.")}</div>'
                 f'</div>', unsafe_allow_html=True
             )
 
@@ -1300,9 +1343,9 @@ else:
                 f'<div class="ov-header"><span>{tr("[ অর্ডার ক্লিক বনাম অর্ডার ]", "[ Clicks vs Confirmed Orders ]")}</span><span class="ov-link">{tr("আগ্রহ →", "Interest →")}</span></div>'
                 f'<div style="display:flex; gap:45px; align-items:center;">'
                 f'<div><div class="ov-sub">{tr("মেসেঞ্জার/কল/ক্লিক", "Customize Clicks")}</div><div class="ov-big">{to_bn_num(ord_clicks)}</div></div>'
-                f'<div><div class="ov-sub">{tr("খাতায় তোলা অর্ডার", "Recorded Orders")}</div><div class="ov-big">{to_bn_num(order_count)}</div></div>'
+                f'<div><div class="ov-sub">{tr("খাতায় তোলা অর্ডার", "Recorded Orders")}</div><div class="ov-big">{to_bn_num(order_count)}</div></div>'
                 f'</div>'
-                f'<div class="ov-foot">{tr("কাস্টমাইজ বাটনে যতবার ট্যাপ হয়েছে বনাম কনফার্ম অর্ডার।", "Total customize taps vs confirmed orders.")}</div>'
+                f'<div class="ov-foot">{tr("কাস্টমাইজ বাটনে যতবার ট্যাপ হয়েছে বনাম কনফার্ম অর্ডার।", "Total customize taps vs confirmed orders.")}</div>'
                 f'</div>', unsafe_allow_html=True
             )
         with r2_c3:
@@ -1315,6 +1358,158 @@ else:
                 f'<div><div class="ov-sub">{tr("বিক্রির টাকা", "Revenue")}</div><div class="ov-big" style="font-size:1.85rem;">৳{to_bn_num(f"{best_prod_rev:,.0f}")}</div></div>'
                 f'</div></div>', unsafe_allow_html=True
             )
+
+    # ==========================================================
+    # নতুন আপডেটেড: বাজার দর, বোর্ড, ফ্লুট, করুগেটেড, ডুপ্লেক্স ও ল্যামিনেশন রেট কন্ট্রোলার
+    # ==========================================================
+    elif "Categories" in admin_page or "ক্যাটাগরি" in admin_page or "Market" in admin_page:
+        st.markdown(tr(
+            "### 📈 কাঁচামালের বাজার দর ও রেট কন্ট্রোলার (Board, Flute, Corrugated, Duplex & Lamination)",
+            "### 📈 Raw Material Market Rate Controller (Board, Flute, Corrugated, Duplex & Lamination)"
+        ))
+
+        m_tab1, m_tab2, m_tab3 = st.tabs([
+            tr("✏️ ১. প্রতিটি উপকরণের দাম পরিবর্তন (Edit Item Rates)", "✏️ 1. Edit Individual Material & Lamination Rates"),
+            tr("📊 ২. গ্লোবাল বাজার দর ওঠানামা ও মার্জিন (Global Market Index)", "📊 2. Global Market Fluctuation & Profit Margin"),
+            tr("➕ ৩. নতুন উপকরণ বা অপশন যোগ (Add New Item)", "➕ 3. Add New Material / Option")
+        ])
+
+        all_opts_df = get_all_options_df()
+
+        with m_tab1:
+            st.markdown(tr(
+                "💡 **নির্দেশনা:** বাজারে যেকোনো বোর্ড, ফ্লুট পেপার, করুগেটেড শিট, ডুপ্লেক্স বোর্ড বা ল্যামিনেশনের দাম কমলে বা বাড়লে নিচের তালিকা থেকে সিলেক্ট করে নতুন রেট বসিয়ে **Save** করুন। সাথে সাথে কাস্টমার ক্যালকুলেটরে বক্সের দাম আপডেট হয়ে যাবে।",
+                "💡 **Instruction:** Select any board, flute paper, corrugated sheet, duplex board, or lamination below to update its rate instantly."
+            ))
+
+            cat_labels = {
+                "material": tr("📄 বোর্ড, ফ্লুট পেপার, করুগেটেড শিট ও ডুপ্লেক্স বোর্ড (Material - প্রতি বর্গ ইঞ্চি রেট)", "📄 Boards, Flute, Corrugated & Duplex (Rate per sq.in)"),
+                "finish": tr("✨ ল্যামিনেশন ও ফয়েল ফিনিশিং (Lamination - প্রতি বর্গ ইঞ্চি রেট)", "✨ Lamination & Foil Finishing (Rate per sq.in)"),
+                "printing": tr("🎨 প্রিন্টিং ও ডাই/প্লেট সেটআপ চার্জ (Printing & Die Setup - ফিক্সড BDT)", "🎨 Printing & Die/Plate Setup Charge (Fixed BDT)"),
+                "box_type": tr("📦 বক্সের স্টাইল ও অতিরিক্ত মেকিং রেট (Box Style Extra Cost - প্রতি পিস BDT)", "📦 Box Style Extra Making Cost (Per Box BDT)")
+            }
+
+            sel_cat_filter = st.selectbox(
+                tr("কোন ক্যাটাগরির দাম পরিবর্তন করতে চান?", "Select Category to Edit:"),
+                ["material", "finish", "printing", "box_type"],
+                format_func=lambda x: cat_labels.get(x, x)
+            )
+
+            sub_df = all_opts_df[all_opts_df["category"] == sel_cat_filter].copy()
+
+            if sel_cat_filter in ["material", "finish"]:
+                mult_now = board_market_mult if sel_cat_filter == "material" else lam_market_mult
+                sub_df["Effective_Rate (Sq.In)"] = (sub_df["rate"] * mult_now).round(4)
+                sub_df["Cost_Per_100_SqIn (BDT)"] = (sub_df["Effective_Rate (Sq.In)"] * 100).round(2)
+
+            st.dataframe(sub_df, use_container_width=True, hide_index=True)
+
+            ed_c1, ed_c2, ed_c3 = st.columns([1.6, 1, 1])
+            opt_list = sub_df["option_name"].tolist()
+            if opt_list:
+                sel_item_name = ed_c1.selectbox(tr("উপকরণ / আইটেম সিলেক্ট করুন:", "Select Item to Update:"), opt_list)
+                cur_rate_val = float(sub_df[sub_df["option_name"] == sel_item_name]["rate"].iloc[0])
+
+                step_val = 0.002 if sel_cat_filter in ["material", "finish"] else 50.0
+                fmt_str = "%.4f" if sel_cat_filter in ["material", "finish"] else "%.2f"
+
+                new_rate_val = ed_c2.number_input(
+                    tr("নতুন বেস রেট (BDT):", "New Base Rate (BDT):"),
+                    min_value=0.0, value=cur_rate_val, step=step_val, format=fmt_str
+                )
+
+                if sel_cat_filter in ["material", "finish"]:
+                    ed_c3.metric(
+                        tr("১০০ বর্গ ইঞ্চিতে খরচ পড়বে", "Cost per 100 sq.in"),
+                        f"৳ {new_rate_val * 100:,.2f}",
+                        delta=f"{(new_rate_val - cur_rate_val)*100:+.2f} BDT"
+                    )
+                else:
+                    ed_c3.metric(
+                        tr("নতুন নির্ধারিত চার্জ", "Updated Charge"),
+                        f"৳ {new_rate_val:,.2f}",
+                        delta=f"{new_rate_val - cur_rate_val:+.2f} BDT"
+                    )
+
+                b_col1, b_col2 = st.columns([1, 1])
+                with b_col1:
+                    if st.button(tr("💾 নতুন দাম সেভ করুন (Update Rate)", "💾 Save Updated Rate"), key="upd_rate_btn"):
+                        conn = get_conn()
+                        conn.execute(
+                            "UPDATE custom_options SET rate=? WHERE option_name=? AND category=?",
+                            (new_rate_val, sel_item_name, sel_cat_filter)
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success(tr(f"✅ '{sel_item_name}'-এর নতুন দাম সফলভাবে সেভ হয়েছে!", f"✅ Rate updated for '{sel_item_name}'!"))
+                        st.rerun()
+
+                with b_col2:
+                    if len(opt_list) > 1 and st.button(tr("🗑️ এই অপশনটি ডিলিট করুন", "🗑️ Delete This Option"), key="del_opt_btn"):
+                        conn = get_conn()
+                        conn.execute("DELETE FROM custom_options WHERE option_name=? AND category=?", (sel_item_name, sel_cat_filter))
+                        conn.commit()
+                        conn.close()
+                        st.warning(tr("অপশনটি ডিলিট করা হয়েছে।", "Option deleted."))
+                        st.rerun()
+
+        with m_tab2:
+            st.markdown(tr(
+                "#### ⚡ এক ক্লিকে পুরো বাজারের দাম বাড়ান বা কমান (Global Market Index & Margin)",
+                "#### ⚡ One-Click Global Market Adjustment & Profit Margin"
+            ))
+            st.caption(tr(
+                "বাজারে হঠাৎ সব কাগজের (Board/Flute/Duplex/Corrugated) বা ল্যামিনেশনের দাম শতকরা (%) হারে বেড়ে বা কমে গেলে এখানে পার্সেন্টেজ সেট করুন। যেমন: +10% দিলে সব বোর্ডের দাম ১০% বেড়ে যাবে, আর -5% দিলে ৫% কমে যাবে।",
+                "Adjust all board/paper or lamination prices globally by percentage (%) when the wholesale market fluctuates."
+            ))
+
+            with st.form("global_market_form"):
+                gm1, gm2 = st.columns(2)
+                new_board_pct = gm1.slider(
+                    tr("📈 সকল বোর্ড, ফ্লুট, করুগেটেড ও ডুপ্লেক্সের বাজার দর পরিবর্তন (%)", "📈 All Board, Flute, Corrugated & Duplex Market Adjustment (%)"),
+                    min_value=-50.0, max_value=100.0, value=board_market_adj_pct, step=1.0
+                )
+                new_lam_pct = gm2.slider(
+                    tr("✨ সকল ল্যামিনেশন ও ফয়েল আইটেমের বাজার দর পরিবর্তন (%)", "✨ All Lamination & Foil Market Adjustment (%)"),
+                    min_value=-50.0, max_value=100.0, value=lam_market_adj_pct, step=1.0
+                )
+
+                st.markdown("<hr style='margin:12px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+                mc1, mc2, mc3, mc4, mc5 = st.columns(5)
+                new_base_mk = mc1.number_input(tr("বেস মেকিং চার্জ (৳/পিস)", "Base Making (৳/pc)"), min_value=0.0, value=base_making_cost_val, step=0.10)
+                new_waste = mc2.number_input(tr("ডাই ওয়েস্টেজ ফ্যাক্টর", "Die Wastage Factor"), min_value=1.0, max_value=2.0, value=wastage_allowance_val, step=0.05)
+                new_m1k = mc3.number_input(tr("মার্জিন <১০০০ পিস (%)", "Margin <1k Pcs (%)"), min_value=1.0, max_value=200.0, value=margin_u1k, step=1.0)
+                new_m3k = mc4.number_input(tr("মার্জিন <৩০০০ পিস (%)", "Margin <3k Pcs (%)"), min_value=1.0, max_value=200.0, value=margin_u3k, step=1.0)
+                new_mbulk = mc5.number_input(tr("মার্জিন ৩০০০+ পিস (%)", "Margin 3k+ Pcs (%)"), min_value=1.0, max_value=200.0, value=margin_b3k, step=1.0)
+
+                if st.form_submit_button(tr("🚀 বাজার দর ও মার্জিন সেটিংস আপডেট করুন", "🚀 Apply Global Market & Margin Settings")):
+                    set_stat("board_market_adj_pct", new_board_pct)
+                    set_stat("lam_market_adj_pct", new_lam_pct)
+                    set_stat("base_making_cost", new_base_mk)
+                    set_stat("wastage_Allowance", new_waste)
+                    set_stat("margin_under_1k", new_m1k)
+                    set_stat("margin_under_3k", new_m3k)
+                    set_stat("margin_bulk_3k", new_mbulk)
+                    st.success(tr("✅ গ্লোবাল বাজার দর এবং প্রফিট মার্জিন সফলভাবে আপডেট হয়েছে!", "✅ Global market rates and margins updated!"))
+                    st.rerun()
+
+        with m_tab3:
+            st.markdown(tr("#### ➕ নতুন বোর্ড, ফ্লুট, করুগেটেড শিট বা ল্যামিনেশন যুক্ত করুন", "#### ➕ Add New Board, Flute, Corrugated Sheet or Lamination"))
+            with st.form("cat_form"):
+                cat_ch = st.selectbox(
+                    tr("ক্যাটাগরি সিলেক্ট করুন", "Select Category"),
+                    ["material", "finish", "printing", "box_type"],
+                    format_func=lambda x: cat_labels.get(x, x)
+                )
+                oname = st.text_input(tr("নতুন অপশনের নাম * (যেমন: 400 GSM Swedish Board / B-Flute Sheet)", "New Option Name *"))
+                orate = st.number_input(tr("বেস রেট (BDT)", "Base Rate (BDT)"), min_value=0.0, value=0.050, step=0.005, format="%.4f")
+                if st.form_submit_button(tr("➕ ডাটাবেজে যোগ করুন", "➕ Add to Database")) and oname.strip():
+                    conn = get_conn()
+                    conn.execute("INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)", (cat_ch, oname.strip(), orate))
+                    conn.commit()
+                    conn.close()
+                    st.success(tr(f"✅ '{oname}' সফলভাবে যুক্ত হয়েছে!", f"✅ '{oname}' added successfully!"))
+                    st.rerun()
 
     elif "Orders" in admin_page or "অর্ডার" in admin_page:
         st.markdown(tr("### 📑 অর্ডার, কোটেশন এবং কাস্টমারের আপলোড করা ডিজাইন ফাইল", "### 📑 Orders, Quotations & Customer Artwork Files"))
@@ -1335,11 +1530,11 @@ else:
                 conn.execute("UPDATE orders SET status=? WHERE order_id=?", (new_st, sel_ord))
                 conn.commit()
                 conn.close()
-                st.success(tr("✅ স্ট্যাটাস আপডেট হয়েছে!", "✅ Status updated!"))
+                st.success(tr("✅ স্ট্যাটাস আপডেট হয়েছে!", "✅ Status updated!"))
                 st.rerun()
 
     elif "Customers" in admin_page or "কাস্টমার" in admin_page:
-        st.markdown(tr("### 👥 রেজিস্টার্ড কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট", "### 👥 Registered Customers & Password Reset"))
+        st.markdown(tr("### 👥 রেজিস্টার্ড কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট", "### 👥 Registered Customers & Password Reset"))
         conn = get_conn()
         cust_df = pd.read_sql_query("SELECT phone, name, password, join_date, total_orders FROM customers", conn)
         conn.close()
@@ -1357,7 +1552,7 @@ else:
             st.dataframe(cust_summary, use_container_width=True)
 
     elif "Accounts" in admin_page or "হিসাব" in admin_page:
-        st.markdown(tr("### 💳 হিসাব খাতা (মোট বাকি ও আদায় ম্যানেজার)", "### 💳 Accounts & Due Payment Manager"))
+        st.markdown(tr("### 💳 হিসাব খাতা (মোট বাকি ও আদায় ম্যানেজার)", "### 💳 Accounts & Due Payment Manager"))
         if not orders_df.empty:
             p_c1, p_c2, p_c3 = st.columns(3)
             pay_ord = p_c1.selectbox(tr("Order ID সিলেক্ট করুন", "Select Order ID"), orders_df["order_id"].tolist())
@@ -1370,7 +1565,7 @@ else:
                 conn.execute("UPDATE orders SET paid_amount=?, due_amount=? WHERE order_id=?", (new_pay, new_due, pay_ord))
                 conn.commit()
                 conn.close()
-                st.success(tr("🎉 পেমেন্ট আপডেট হয়েছে!", "🎉 Payment updated!"))
+                st.success(tr("🎉 পেমেন্ট আপডেট হয়েছে!", "🎉 Payment updated!"))
                 st.rerun()
 
     elif "Products" in admin_page or "প্রোডাক্ট" in admin_page:
@@ -1384,7 +1579,7 @@ else:
                 or_url = st.text_input(tr("অথবা ছবির অনলাইন লিংক দিন:", "Or Paste Image URL:"))
                 gc1, gc2 = st.columns(2)
                 g_box = gc1.selectbox(tr("বক্সের ধরন", "Box Style"), box_options, format_func=fmt_opt)
-                g_mat = gc2.selectbox(tr("ম্যাটেরিয়াল", "Material"), mat_options, format_func=fmt_opt)
+                g_mat = gc2.selectbox(tr("ম্যাটেরিয়াল", "Material"), mat_options, format_func=fmt_opt)
                 gc3, gc4 = st.columns(2)
                 g_fin = gc3.selectbox(tr("ফিনিশিং", "Finishing"), finish_options, format_func=fmt_opt)
                 g_prt = gc4.selectbox(tr("প্রিন্টিং", "Printing"), print_options, format_func=fmt_opt)
@@ -1410,7 +1605,7 @@ else:
                         """, (new_title, new_code or "PX-Custom", saved_path, g_box, g_mat, g_fin, g_prt, g_l, g_w, g_h))
                         conn.commit()
                         conn.close()
-                        st.success(tr("✅ নতুন বক্স যুক্ত হয়েছে!", "✅ New box added!"))
+                        st.success(tr("✅ নতুন বক্স যুক্ত হয়েছে!", "✅ New box added!"))
                         st.rerun()
 
         with col_edit:
@@ -1429,7 +1624,7 @@ else:
                     conn.execute("UPDATE catalog SET img_path=? WHERE id=?", (fpath, sel_id))
                     conn.commit()
                     conn.close()
-                    st.success(tr("✅ ছবি পরিবর্তন হয়েছে!", "✅ Photo updated!"))
+                    st.success(tr("✅ ছবি পরিবর্তন হয়েছে!", "✅ Photo updated!"))
                     st.rerun()
                 if st.button(tr("🗑️ এই প্রোডাক্টটি ডিলিট করুন", "🗑️ Delete This Product")):
                     conn = get_conn()
@@ -1437,18 +1632,6 @@ else:
                     conn.commit()
                     conn.close()
                     st.rerun()
-
-    elif "Categories" in admin_page or "ক্যাটাগরি" in admin_page:
-        with st.form("cat_form"):
-            cat_ch = st.selectbox(tr("ক্যাটাগরি", "Category"), ["material", "box_type", "finish", "printing"])
-            oname = st.text_input(tr("নতুন অপশনের নাম *", "New Option Name *"))
-            orate = st.number_input(tr("রেট (BDT)", "Rate (BDT)"), min_value=0.0, value=0.05, step=0.005, format="%.3f")
-            if st.form_submit_button(tr("➕ যোগ করুন", "➕ Add Option")) and oname.strip():
-                conn = get_conn()
-                conn.execute("INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)", (cat_ch, oname.strip(), orate))
-                conn.commit()
-                conn.close()
-                st.rerun()
 
     elif "Traffic" in admin_page or "ট্রাফিক" in admin_page:
         with st.form("traffic_update"):
@@ -1459,7 +1642,7 @@ else:
                 set_stat("today_visitors", u_vis)
                 set_stat("page_views", u_pvw)
                 set_stat("live_now", u_liv)
-                st.success(tr("✅ ট্রাফিক ডাটা আপডেট হয়েছে!", "✅ Traffic stats updated!"))
+                st.success(tr("✅ ট্রাফিক ডাটা আপডেট হয়েছে!", "✅ Traffic stats updated!"))
                 st.rerun()
 
     elif "Interest" in admin_page or "আগ্রহ" in admin_page:
@@ -1484,10 +1667,10 @@ else:
                 set_stat("seo_title", s_title)
                 set_stat("seo_keywords", s_keys)
                 set_stat("seo_desc", s_desc)
-                st.success(tr("✅ এসইও কনফিগারেশন সেভ হয়েছে!", "✅ SEO configuration saved!"))
+                st.success(tr("✅ এসইও কনফিগারেশন সেভ হয়েছে!", "✅ SEO configuration saved!"))
 
     elif "Settings" in admin_page or "সেটিংস" in admin_page:
-        st.markdown(tr("### ⚙️ কোম্পানির ঠিকানা, ফেসবুক পেজ ও পাসওয়ার্ড সেটিংস", "### ⚙️ Company Address, Facebook Page & Security Settings"))
+        st.markdown(tr("### ⚙️ কোম্পানির ঠিকানা, ফেসবুক পেজ ও পাসওয়ার্ড সেটিংস", "### ⚙️ Company Address, Facebook Page & Security Settings"))
         set_col1, set_col2 = st.columns(2, gap="large")
 
         with set_col1:
@@ -1495,7 +1678,7 @@ else:
             with st.form("sys_settings"):
                 cur_login_state = get_stat("enable_customer_login", "1") == "1"
                 toggle_login = st.checkbox(tr("কাস্টমার পেজে 'মেম্বার লগইন' অপশন চালু রাখুন", "Enable 'Member Login' on Customer Page"), value=cur_login_state)
-                f_phn = st.text_input(tr("ফ্যাক্টরি হটলাইন / হোয়াটসঅ্যাপ নম্বর", "Factory Hotline / WhatsApp"), value=fac_phone)
+                f_phn = st.text_input(tr("ফ্যাক্টরি হটলাইন / হোয়াটসঅ্যাপ নম্বর", "Factory Hotline / WhatsApp"), value=fac_phone)
                 f_fb = st.text_input(tr("ফেসবুক পেজ লিংক", "Facebook Page URL"), value=fb_url)
                 f_msg = st.text_input(tr("মেসেঞ্জার ডিরেক্ট চ্যাট লিংক", "Messenger Direct URL"), value=msg_url)
                 f_eml = st.text_input(tr("ইমেইল", "Official Email"), value=fac_email)
@@ -1509,27 +1692,27 @@ else:
                     set_stat("factory_email", f_eml)
                     set_stat("factory_address", f_adr)
                     set_stat("order_clicks", ord_clk)
-                    st.success(tr("✅ কোম্পানির তথ্য সফলভাবে আপডেট হয়েছে!", "✅ Company info updated successfully!"))
+                    st.success(tr("✅ কোম্পানির তথ্য সফলভাবে আপডেট হয়েছে!", "✅ Company info updated successfully!"))
                     st.rerun()
 
         with set_col2:
-            st.markdown(tr("#### 🔐 অ্যাডমিন পাসওয়ার্ড পরিবর্তন করুন (Security)", "#### 🔐 Change Admin Password (Security)"))
+            st.markdown(tr("#### 🔐 অ্যাডমিন পাসওয়ার্ড পরিবর্তন করুন (Security)", "#### 🔐 Change Admin Password (Security)"))
             with st.form("change_admin_pw_form"):
-                cur_pw_input = st.text_input(tr("বর্তমান পাসওয়ার্ড দিন *", "Current Password *"), type="password")
-                new_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড দিন *", "New Password *"), type="password")
-                conf_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড পুনরায় দিন *", "Confirm New Password *"), type="password")
+                cur_pw_input = st.text_input(tr("বর্তমান পাসওয়ার্ড দিন *", "Current Password *"), type="password")
+                new_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড দিন *", "New Password *"), type="password")
+                conf_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড পুনরায় দিন *", "Confirm New Password *"), type="password")
 
-                if st.form_submit_button(tr("🔑 পাসওয়ার্ড আপডেট করুন", "🔑 Update Password")):
+                if st.form_submit_button(tr("🔑 পাসওয়ার্ড আপডেট করুন", "🔑 Update Password")):
                     saved_adm_pw = get_stat("admin_password", "admin123")
                     if cur_pw_input != saved_adm_pw:
-                        st.error(tr("❌ বর্তমান পাসওয়ার্ডটি সঠিক নয়!", "❌ Current password is incorrect!"))
+                        st.error(tr("❌ বর্তমান পাসওয়ার্ডটি সঠিক নয়!", "❌ Current password is incorrect!"))
                     elif len(new_pw_input.strip()) < 4:
-                        st.warning(tr("⚠️ নতুন পাসওয়ার্ড অন্তত ৪ অক্ষরের হতে হবে।", "⚠️ New password must be at least 4 characters."))
+                        st.warning(tr("⚠️ নতুন পাসওয়ার্ড অন্তত ৪ অক্ষরের হতে হবে।", "⚠️ New password must be at least 4 characters."))
                     elif new_pw_input != conf_pw_input:
-                        st.error(tr("❌ নতুন পাসওয়ার্ড দুটি মেলেনি!", "❌ New passwords do not match!"))
+                        st.error(tr("❌ নতুন পাসওয়ার্ড দুটি মেলেনি!", "❌ New passwords do not match!"))
                     else:
                         set_stat("admin_password", new_pw_input.strip())
-                        st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
+                        st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
 
 # ==========================================================
 # ৬. BOTTOM CONTACT CARD, FLOATING SOCIAL BAR & LICENSE FOOTER
@@ -1539,7 +1722,7 @@ st.markdown("<hr style='margin:40px 0 22px 0; border-color:rgba(255,255,255,0.1)
 st.markdown(
     f'<div class="dark-glass-card" style="padding:22px 26px; margin-bottom:18px;">'
     f'<div style="font-size:1.08rem; font-weight:800; color:#60a5fa; margin-bottom:12px;">'
-    f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
+    f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
     f'</div>'
     f'<div style="font-size:0.92rem; color:#e2e8f0; line-height:2.0;">'
     f'<div style="display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:4px;">'
@@ -1588,4 +1771,4 @@ with f_col2:
                     st.session_state.admin_logged_in = True
                     st.rerun()
                 else:
-                    st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
+                    st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
