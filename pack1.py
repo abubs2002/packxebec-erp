@@ -150,14 +150,14 @@ def init_db():
 
     c.execute("SELECT COUNT(*) FROM catalog")
     if c.fetchone()[0] == 0:
-        u1 = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
-        u2 = "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=600"
-        u3 = "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?w=600"
-        u4 = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600"
-        u5 = "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600"
-        u6 = "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600"
-        u7 = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600"
-        u8 = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
+        u1 = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"
+        u2 = "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=800"
+        u3 = "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?w=800"
+        u4 = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"
+        u5 = "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800"
+        u6 = "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=800"
+        u7 = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800"
+        u8 = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"
 
         default_catalog = [
             ("১২ x ৯ x ৪ কাস্টম ডাই-কাট বক্স", "PX-101 • E-Flute Kraft", u1,
@@ -309,7 +309,7 @@ def render_img_src(img_path):
             b64 = base64.b64encode(f.read()).decode()
             ext = "png" if p.lower().endswith(".png") else "jpeg"
             return f"data:image/{ext};base64,{b64}"
-    return "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
+    return "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"
 
 def svg_to_b64(svg_str):
     b64 = base64.b64encode(svg_str.encode("utf-8")).decode("utf-8")
@@ -321,7 +321,7 @@ def to_bn_num(val):
     return str(val).translate(str.maketrans(en, bn))
 
 # ==========================================================
-# ২. PACKXEBEC BRAND LOGO
+# ২. PACKXEBEC BRAND LOGO (Compact & Clean)
 # ==========================================================
 DARK_LOGO_PARTS = [
     '<svg viewBox="0 0 500 430" xmlns="http://www.w3.org/2000/svg">',
@@ -382,7 +382,7 @@ if "cust_user" not in st.session_state:
     st.session_state.cust_user = None
 
 # ==========================================================
-# ৩. FULL-WIDTH NO-SIDEBAR DARK UI CSS
+# ৩. COMPACT LOGO & RESPONSIVE ZOOMABLE PRODUCT CARDS CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -395,6 +395,12 @@ html, body, [class*="css"] {
 .stApp {
     background: radial-gradient(circle at top center, #1e1b4b 0%, #090d16 45%, #060911 100%);
     color: #f8fafc;
+}
+
+/* ওপরের অতিরিক্ত ফাঁকা জায়গা কমিয়ে লোগো সুন্দরভাবে ফিট করা */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
 }
 
 section[data-testid="stSidebar"],
@@ -410,23 +416,33 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 600 !important;
 }
 
+/* ছোট ও স্টাইলিশ কম্প্যাক্ট লোগো ব্যানার */
 .hero-logo-banner {
     background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(19, 28, 49, 0.95) 100%);
     border: 1px solid #26334d;
-    border-radius: 22px;
-    padding: 28px 32px;
+    border-radius: 18px;
+    padding: 16px 24px;
     text-align: center;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
     position: relative;
     overflow: hidden;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 .hero-logo-banner::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 5px;
+    height: 4px;
     background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+}
+.hero-logo-img {
+    width: clamp(115px, 11vw, 150px);
+    height: auto;
+    margin-bottom: 4px;
+    transition: transform 0.3s ease;
+}
+.hero-logo-img:hover {
+    transform: scale(1.05);
 }
 
 .dark-glass-card {
@@ -483,9 +499,9 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 .live-badge {
     background: rgba(34, 197, 94, 0.14);
     color: #4ade80 !important;
-    padding: 6px 15px;
+    padding: 4px 13px;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 600;
     border: 1px solid rgba(74, 222, 128, 0.28);
     display: inline-block;
@@ -493,9 +509,9 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 .vip-badge {
     background: linear-gradient(90deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2));
     color: #f472b6 !important;
-    padding: 6px 14px;
+    padding: 5px 13px;
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 700;
     border: 1px solid rgba(244, 114, 182, 0.4);
     display: inline-block;
@@ -518,29 +534,57 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     margin: 4px 5px 4px 0;
     border: 1px solid rgba(255, 255, 255, 0.14);
 }
+
+/* বড় প্রোডাক্ট ছবি ও স্মুথ জুম ইন/জুম আউট অ্যানিমেশন */
 .cat-card {
     background: linear-gradient(145deg, #0f172a 0%, #162038 100%);
     border: 1px solid #26334d;
-    border-radius: 15px;
+    border-radius: 16px;
     overflow: hidden;
-    transition: all 0.25s ease;
-    margin-bottom: 8px;
+    transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    margin-bottom: 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 .cat-card:hover {
-    transform: translateY(-4px);
-    border-color: #a855f7;
+    transform: translateY(-6px);
+    border-color: #ec4899;
+    box-shadow: 0 18px 36px rgba(236, 72, 153, 0.25);
 }
 .cat-img-box {
     background: #0b1120;
-    height: 155px;
     width: 100%;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     border-bottom: 1px solid #1e293b;
+    position: relative;
 }
-.cat-img-box img { width: 100%; height: 100%; object-fit: cover; }
-.cat-info { padding: 12px 14px; }
-.cat-title { font-size: 0.9rem; font-weight: 700; color: #f8fafc !important; margin: 0; }
-.cat-sub { font-size: 0.75rem; color: #c084fc !important; font-weight: 600; margin-top: 4px; }
+.cat-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: zoom-in;
+}
+/* মাউস নিলে বা টাচ করলে ছবি বড় (Zoom In) হবে এবং সরালে ছোট (Zoom Out) হবে */
+.cat-card:hover .cat-img-box img,
+.cat-img-box img:active {
+    transform: scale(1.22);
+}
+.cat-info {
+    padding: 14px 16px;
+}
+.cat-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc !important;
+    margin: 0;
+}
+.cat-sub {
+    font-size: 0.8rem;
+    color: #c084fc !important;
+    font-weight: 600;
+    margin-top: 4px;
+}
 
 div[data-baseweb="select"] > div,
 div[data-baseweb="input"],
@@ -598,12 +642,12 @@ finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
 # ==========================================================
-# ৪. BIG CENTER BRAND LOGO HEADER
+# ৪. COMPACT BRAND LOGO HEADER (ছোট ও রেসপনসিভ লোগো)
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
-    f'<img src="{LOGO_SRC}" style="width:280px; max-width:85%; height:auto; margin-bottom:10px;">'
-    f'<div style="color:#cbd5e1; font-size:1.02rem; font-weight:500; margin-bottom:12px;">'
+    f'<img src="{LOGO_SRC}" class="hero-logo-img">'
+    f'<div style="color:#cbd5e1; font-size:0.9rem; font-weight:500; margin-bottom:8px;">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
     f'<div>'
@@ -714,23 +758,36 @@ if not st.session_state.admin_logged_in:
                         else:
                             st.warning("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।")
 
-    st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
+    # গ্যালারি হেডার ও জুম ইন / জুম আউট কন্ট্রোলার
+    g_head1, g_head2 = st.columns([2.2, 1])
+    with g_head1:
+        st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
+    with g_head2:
+        zoom_mode = st.select_slider(
+            "🔍 ছবির সাইজ (Zoom In / Out):",
+            options=["Normal (4 Cols)", "Large (3 Cols)", "Extra Large (2 Cols)"],
+            value="Large (3 Cols)"
+        )
+
+    col_count = 4 if "4" in zoom_mode else (3 if "3" in zoom_mode else 2)
+    img_height = "205px" if col_count == 4 else ("255px" if col_count == 3 else "340px")
+
     catalog_df = get_catalog_df()
     catalog_records = catalog_df.to_dict("records")
 
-    for i in range(0, len(catalog_records), 4):
-        row_items = catalog_records[i:i+4]
-        cols = st.columns(4, gap="medium")
+    for i in range(0, len(catalog_records), col_count):
+        row_items = catalog_records[i:i+col_count]
+        cols = st.columns(col_count, gap="medium")
         for idx, item in enumerate(row_items):
             with cols[idx]:
                 img_src = render_img_src(item["img_path"])
                 st.markdown(
                     f'<div class="cat-card">'
-                    f'<div class="cat-img-box"><img src="{img_src}"></div>'
+                    f'<div class="cat-img-box" style="height:{img_height};"><img src="{img_src}"></div>'
                     f'<div class="cat-info">'
                     f'<p class="cat-title">{item["title"]}</p>'
                     f'<p class="cat-sub">{item["code"]}</p>'
-                    f'<div style="margin-top:6px;"><span class="spec-pill" style="font-size:0.72rem; padding:3px 8px;">📏 {item["length"]}"×{item["width"]}"×{item["height"]}"</span></div>'
+                    f'<div style="margin-top:6px;"><span class="spec-pill" style="font-size:0.76rem; padding:4px 10px;">📏 {item["length"]}"×{item["width"]}"×{item["height"]}"</span></div>'
                     f'</div></div>',
                     unsafe_allow_html=True
                 )
@@ -787,7 +844,6 @@ if not st.session_state.admin_logged_in:
 
         cust_name = fc2.text_input("আপনার নাম / ব্র্যান্ডের নাম *", value=default_name)
 
-        # বর্তমান সিলেক্টেড সাইজের সাথে কাস্টমারের আগের সাইজ মিলছে কি না তা অটো চেক করা
         current_dim_str1 = f"{length}x{width}x{height}"
         current_dim_str2 = f"{int(length) if length.is_integer() else length}x{int(width) if width.is_integer() else width}x{int(height) if height.is_integer() else height}"
         prev_dims_list = live_old_record.get("prev_dims", []) if live_old_record else []
@@ -830,38 +886,29 @@ if not st.session_state.admin_logged_in:
         advance_pay = st.number_input("অ্যাডভান্স পেমেন্ট (যদি থাকে - BDT)", min_value=0.0, value=0.0, step=500.0)
         cust_notes = st.text_area("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন পরিবর্তনের নির্দেশনা (ঐচ্ছিক)", height=70)
 
-        # ==========================================================
-        # ডায়নামিক কস্ট ক্যালকুলেশন (ডাই + প্লেট আলাদা হিসাব)
-        # ==========================================================
         surface_area = 2 * ((length * width) + (length * height) + (width * height)) * 1.25
         board_cost = surface_area * mat_dict.get(material, 0.045)
         lam_cost = surface_area * finish_dict.get(finish, 0.015)
         making_cost = 1.50 + box_dict.get(box_type, 0.0)
 
-        # মোট সেটআপ চার্জকে ২ ভাগে ভাগ করা হয়েছে: ৪০% ডাই (Die) চার্জ এবং ৬০% প্রিন্টিং প্লেট (Plate) চার্জ
         raw_setup_cost = print_dict.get(printing, 2500.0)
         die_making_cost = raw_setup_cost * 0.40
         plate_making_cost = raw_setup_cost * 0.60
 
         margin = 1.35 if quantity < 1000 else (1.25 if quantity < 3000 else 1.18)
 
-        # ১. নতুন কাস্টমার বা রেগুলার মূল্য (ডাই + প্লেট দুটোই লাগবে)
         reg_unit_cost = board_cost + lam_cost + making_cost + ((die_making_cost + plate_making_cost) / quantity)
         reg_unit_price = round(reg_unit_cost * margin, 2)
         reg_total_price = round(reg_unit_price * quantity, 2)
 
-        # ২. পুরাতন কাস্টমারের ৩টি ভিন্ন কেস অনুযায়ী দাম হিসাব
         if live_old_record:
             if repeat_mode == "exact_repeat":
-                # কেস ১: সাইজ ও ডিজাইন দুটোই আগের -> ডাই (০) + প্লেট (০), সাথে ৫% ছাড়
                 applied_setup = 0.0
                 loyalty_mult = 0.95
             elif repeat_mode == "same_size_new_design":
-                # কেস ২: সাইজ আগের কিন্তু ডিজাইন নতুন -> ডাই ফ্রি (০), কিন্তু নতুন প্লেট চার্জ লাগবে, সাথে ৩% ছাড়
                 applied_setup = plate_making_cost
                 loyalty_mult = 0.97
             else:
-                # কেস ৩: সাইজ ও ডিজাইন দুটোই নতুন -> নতুন ডাই + নতুন প্লেট দুটোই লাগবে, শুধু ৩% মেম্বার ছাড়
                 applied_setup = die_making_cost + plate_making_cost
                 loyalty_mult = 0.97
 
@@ -1154,7 +1201,7 @@ else:
                 g_h = d3.number_input("উচ্চতা (H)", value=3.0, step=0.5)
                 if st.form_submit_button("✨ প্রোডাক্ট গ্যালারিতে সেভ করুন"):
                     if new_title.strip():
-                        saved_path = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
+                        saved_path = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"
                         if up_file is not None:
                             ext = os.path.splitext(up_file.name)[1]
                             fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
