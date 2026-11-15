@@ -28,7 +28,7 @@ st.set_page_config(
 DB_NAME = "packxebec_erp_v4.db"
 
 # ==========================================================
-# ১. SQLITE DATABASE ENGINE (Customer Login + File Upload সহ)
+# ১. SQLITE DATABASE ENGINE
 # ==========================================================
 def get_conn():
     return sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -37,7 +37,6 @@ def init_db():
     conn = get_conn()
     c = conn.cursor()
 
-    # ১. কাস্টমার অ্যাকাউন্ট টেবিল (লগইন ও ডিসকাউন্ট ট্র্যাকিং)
     c.execute("""
         CREATE TABLE IF NOT EXISTS customers (
             phone TEXT PRIMARY KEY,
@@ -48,7 +47,6 @@ def init_db():
         )
     """)
 
-    # ২. অর্ডার টেবিল (ডিজাইন ফাইল ও ডিসকাউন্ট কলামসহ)
     c.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             order_id TEXT PRIMARY KEY,
@@ -74,7 +72,6 @@ def init_db():
         )
     """)
 
-    # ৩. প্রোডাক্ট গ্যালারি টেবিল
     c.execute("""
         CREATE TABLE IF NOT EXISTS catalog (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,7 +89,6 @@ def init_db():
         )
     """)
 
-    # ৪. কাস্টম অপশন ও ক্যাটাগরি রেট টেবিল
     c.execute("""
         CREATE TABLE IF NOT EXISTS custom_options (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,7 +98,6 @@ def init_db():
         )
     """)
 
-    # ৫. ওয়েবসাইট মেট্রিক্স ও এসইও টেবিল
     c.execute("""
         CREATE TABLE IF NOT EXISTS site_stats (
             stat_key TEXT PRIMARY KEY,
@@ -119,7 +114,8 @@ def init_db():
         ("seo_title", "packxebec | Custom Packaging & Box Manufacturer in BD"),
         ("seo_keywords", "300 GSM Swedish Board, Custom Box Dhaka, Packaging Printing"),
         ("seo_desc", "Order custom printed packaging boxes with instant quotation."),
-        ("factory_phone", "01XXXXXXXXX")
+        ("factory_phone", "01XXXXXXXXX"),
+        ("enable_customer_login", "1")
     ]
     c.executemany(
         "INSERT OR IGNORE INTO site_stats VALUES (?, ?)",
@@ -195,7 +191,6 @@ def init_db():
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, default_catalog)
 
-    # ডেমো পুরাতন কাস্টমার ও অর্ডার
     c.execute("SELECT COUNT(*) FROM customers")
     if c.fetchone()[0] == 0:
         demo_custs = [
@@ -322,7 +317,7 @@ def to_bn_num(val):
     return str(val).translate(str.maketrans(en, bn))
 
 # ==========================================================
-# ২. PACKXEBEC BRAND LOGO (Big Center Hero Version)
+# ২. PACKXEBEC BRAND LOGO
 # ==========================================================
 DARK_LOGO_PARTS = [
     '<svg viewBox="0 0 500 430" xmlns="http://www.w3.org/2000/svg">',
@@ -365,7 +360,6 @@ DARK_LOGO_PARTS = [
 ]
 LOGO_SRC = svg_to_b64("".join(DARK_LOGO_PARTS))
 
-# সেশন স্টেট
 if "sel_box_type" not in st.session_state:
     st.session_state.sel_box_type = "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)"
 if "sel_material" not in st.session_state:
@@ -399,7 +393,6 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 
-/* বাম পাশের সাইডবার সম্পূর্ণ হাইড করা হয়েছে */
 section[data-testid="stSidebar"],
 button[data-testid="collapsedControl"] {
     display: none !important;
@@ -413,7 +406,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 600 !important;
 }
 
-/* সামনের বিশাল লোগো হিরো ব্যানার */
 .hero-logo-banner {
     background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(19, 28, 49, 0.95) 100%);
     border: 1px solid #26334d;
@@ -423,7 +415,7 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
     position: relative;
     overflow: hidden;
-    margin-bottom: 24px;
+    margin-bottom: 22px;
 }
 .hero-logo-banner::before {
     content: "";
@@ -602,7 +594,7 @@ finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
 # ==========================================================
-# ৪. BIG CENTER BRAND LOGO HEADER (সামনে বড় করে লোগো)
+# ৪. BIG CENTER BRAND LOGO HEADER (ক্লিন ব্যানার - নোট ছাড়া)
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
@@ -611,114 +603,90 @@ st.markdown(
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
     f'<div>'
-    f'<span class="live-badge">● Online Ordering Active</span> &nbsp;'
-    f'<span class="vip-badge">✨ পুরাতন কাস্টমারদের জন্য প্লেট ও ডাই চার্জ ফ্রি + ৫% ছাড়!</span>'
+    f'<span class="live-badge">● Online Ordering Active</span>'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True
 )
 
 # ==========================================================
-# ৫. RETURNING CUSTOMER LOGIN & RECORD BAR (ওপরে কাস্টমার পোর্টাল)
-# ==========================================================
-top_c1, top_c2 = st.columns([1.4, 1], gap="medium")
-
-with top_c1:
-    if st.session_state.cust_user:
-        u = st.session_state.cust_user
-        st.markdown(
-            f'<div class="dark-glass-card" style="padding:18px 22px;">'
-            f'<div style="display:flex; justify-content:space-between; align-items:center;">'
-            f'<div>'
-            f'<span class="vip-badge">👑 Returning VIP Client</span>'
-            f'<h4 style="margin:6px 0 2px 0;">স্বাগতম, {u["name"]} ({u["phone"]})</h4>'
-            f'<div style="font-size:0.84rem; color:#cbd5e1;">'
-            f'আপনার পূর্ববর্তী অর্ডার: <b>{u["order_count"]} টি</b> | '
-            f'মোট বিল: <b>৳{u["total_billed"]:,.0f}</b> | '
-            f'বর্তমান বাকি: <b style="color:#f472b6;">৳{u["total_due"]:,.0f}</b>'
-            f'</div>'
-            f'<div style="font-size:0.8rem; color:#4ade80; margin-top:4px;">'
-            f'✅ আপনার পুরনো ডাই ও প্লেট রেকর্ড থাকায় প্রতি অর্ডারে প্লেট সেটআপ চার্জ মওকুফ ও ৫% রিপিট ডিসকাউন্ট চালু হয়েছে!'
-            f'</div>'
-            f'</div>'
-            f'</div></div>',
-            unsafe_allow_html=True
-        )
-        if st.button("🚪 কাস্টমার লগআউট"):
-            st.session_state.cust_user = None
-            st.rerun()
-    else:
-        st.markdown(
-            '<div class="dark-glass-card" style="padding:18px 22px;">'
-            '<div style="font-size:1.05rem; font-weight:700; color:#ffffff;">🎉 আপনি কি আমাদের পুরাতন কাস্টমার?</div>'
-            '<div style="font-size:0.86rem; color:#cbd5e1; margin-top:4px;">'
-            'ডান পাশ থেকে <b>মোবাইল নম্বর দিয়ে লগইন</b> করুন অথবা অর্ডার ফর্মে আপনার আগের মোবাইল নম্বর দিন। '
-            'পুরাতন কাস্টমারদের আগের ডাই-কাট ও প্রিন্টিং প্লেট সংরক্ষিত থাকে, তাই <b>নতুন করে প্লেট চার্জ লাগবে না এবং বক্সের দাম অটোমেটিক কমে যাবে!</b>'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
-
-with top_c2:
-    with st.expander("👤 কাস্টমার লগইন / মেম্বার রেজিস্ট্রেশন (Click Here)", expanded=False):
-        auth_tab1, auth_tab2 = st.tabs(["🔑 লগইন (Old Customer)", "➕ নতুন অ্যাকাউন্ট"])
-        with auth_tab1:
-            l_phone = st.text_input("মোবাইল নম্বর", placeholder="যেমন: 01711000001", key="lp")
-            l_pass = st.text_input("পাসওয়ার্ড (ডিফল্ট ডেমো: 1234)", type="password", key="lps")
-            if st.button("লগইন করুন", key="lbtn"):
-                conn = get_conn()
-                c = conn.cursor()
-                c.execute("SELECT name FROM customers WHERE phone=? AND password=?", (l_phone.strip(), l_pass.strip()))
-                r = c.fetchone()
-                conn.close()
-                rec = check_returning_customer(l_phone.strip())
-                if r or rec:
-                    st.session_state.cust_user = rec if rec else {
-                        "name": r[0], "phone": l_phone.strip(),
-                        "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0
-                    }
-                    st.success("✅ সফলভাবে লগইন হয়েছে! ডিসকাউন্ট চালু হয়েছে।")
-                    st.rerun()
-                else:
-                    st.error("❌ এই নম্বরে কোনো রেকর্ড পাওয়া যায়নি। নতুন অ্যাকাউন্ট খুলুন।")
-
-        with auth_tab2:
-            r_name = st.text_input("আপনার নাম / ব্র্যান্ডের নাম", key="rn")
-            r_phone = st.text_input("মোবাইল নম্বর", key="rp")
-            r_pass = st.text_input("পাসওয়ার্ড সেট করুন", type="password", key="rps")
-            if st.button("অ্যাকাউন্ট তৈরি করুন", key="rbtn"):
-                if r_name.strip() and r_phone.strip() and r_pass.strip():
-                    conn = get_conn()
-                    conn.execute(
-                        "INSERT OR REPLACE INTO customers VALUES (?, ?, ?, ?, 1)",
-                        (r_phone.strip(), r_name.strip(), r_pass.strip(), datetime.now().strftime("%Y-%m-%d"))
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.session_state.cust_user = check_returning_customer(r_phone.strip())
-                    st.success("🎉 অ্যাকাউন্ট তৈরি ও লগইন সম্পন্ন হয়েছে!")
-                    st.rerun()
-                else:
-                    st.warning("সবগুলো ঘর পূরণ করুন।")
-
-# যদি কাস্টমার লগইন করা থাকে, তার আগের অর্ডারের রেকর্ড দেখানোর অপশন
-if st.session_state.cust_user:
-    with st.expander("📜 আপনার পূর্ববর্তী অর্ডারের রেকর্ড ও ডিজাইন ফাইল দেখুন"):
-        conn = get_conn()
-        my_ords = pd.read_sql_query(
-            "SELECT order_id, date, box_type, dimensions, quantity, total_price, discount_saved, paid_amount, due_amount, design_file, status "
-            "FROM orders WHERE phone=? ORDER BY date DESC",
-            conn, params=(st.session_state.cust_user["phone"],)
-        )
-        conn.close()
-        if my_ords.empty:
-            st.info("এই নম্বরে এখনো কোনো অর্ডার নেই।")
-        else:
-            st.dataframe(my_ords, use_container_width=True)
-
-# ==========================================================
-# PART A: CUSTOMER STUDIO (যখন অ্যাডমিন মোড অফ থাকে)
+# PART A: CUSTOMER STUDIO (শুধুমাত্র যখন অ্যাডমিন মোড অফ থাকে)
 # ==========================================================
 if not st.session_state.admin_logged_in:
+    # অ্যাডমিন সেটিংস থেকে কাস্টমার লগইন অপশন চালু থাকলে তবেই দেখাবে (এবং কোনো বাড়তি নোট বক্স ছাড়া)
+    if get_stat("enable_customer_login", "1") == "1":
+        if st.session_state.cust_user:
+            u = st.session_state.cust_user
+            c_top1, c_top2 = st.columns([3, 1])
+            with c_top1:
+                st.markdown(
+                    f'<div class="dark-glass-card" style="padding:16px 22px;">'
+                    f'<span class="vip-badge">👑 মেম্বার প্রোফাইল</span>'
+                    f'<h4 style="margin:6px 0 2px 0;">স্বাগতম, {u["name"]} ({u["phone"]})</h4>'
+                    f'<div style="font-size:0.84rem; color:#cbd5e1;">'
+                    f'পূর্ববর্তী অর্ডার: <b>{u["order_count"]} টি</b> | '
+                    f'মোট বিল: <b>৳{u["total_billed"]:,.0f}</b> | '
+                    f'বর্তমান বাকি: <b style="color:#f472b6;">৳{u["total_due"]:,.0f}</b>'
+                    f'</div></div>',
+                    unsafe_allow_html=True
+                )
+            with c_top2:
+                if st.button("🚪 কাস্টমার লগআউট"):
+                    st.session_state.cust_user = None
+                    st.rerun()
+
+            with st.expander("📜 আপনার পূর্ববর্তী অর্ডারের রেকর্ড দেখুন"):
+                conn = get_conn()
+                my_ords = pd.read_sql_query(
+                    "SELECT order_id, date, box_type, dimensions, quantity, total_price, discount_saved, paid_amount, due_amount, design_file, status "
+                    "FROM orders WHERE phone=? ORDER BY date DESC",
+                    conn, params=(u["phone"],)
+                )
+                conn.close()
+                if not my_ords.empty:
+                    st.dataframe(my_ords, use_container_width=True)
+        else:
+            with st.expander("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন", expanded=False):
+                auth_tab1, auth_tab2 = st.tabs(["🔑 মেম্বার লগইন", "➕ নতুন অ্যাকাউন্ট"])
+                with auth_tab1:
+                    l_c1, l_c2 = st.columns(2)
+                    l_phone = l_c1.text_input("মোবাইল নম্বর", placeholder="01XXXXXXXXX", key="lp")
+                    l_pass = l_c2.text_input("পাসওয়ার্ড", type="password", key="lps")
+                    if st.button("লগইন করুন", key="lbtn"):
+                        conn = get_conn()
+                        c = conn.cursor()
+                        c.execute("SELECT name FROM customers WHERE phone=? AND password=?", (l_phone.strip(), l_pass.strip()))
+                        r = c.fetchone()
+                        conn.close()
+                        rec = check_returning_customer(l_phone.strip())
+                        if r or rec:
+                            st.session_state.cust_user = rec if rec else {
+                                "name": r[0], "phone": l_phone.strip(),
+                                "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0
+                            }
+                            st.rerun()
+                        else:
+                            st.error("❌ এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।")
+
+                with auth_tab2:
+                    r_c1, r_c2, r_c3 = st.columns(3)
+                    r_name = r_c1.text_input("আপনার নাম / ব্র্যান্ডের নাম", key="rn")
+                    r_phone = r_c2.text_input("মোবাইল নম্বর", key="rp")
+                    r_pass = r_c3.text_input("পাসওয়ার্ড সেট করুন", type="password", key="rps")
+                    if st.button("অ্যাকাউন্ট তৈরি করুন", key="rbtn"):
+                        if r_name.strip() and r_phone.strip() and r_pass.strip():
+                            conn = get_conn()
+                            conn.execute(
+                                "INSERT OR REPLACE INTO customers VALUES (?, ?, ?, ?, 1)",
+                                (r_phone.strip(), r_name.strip(), r_pass.strip(), datetime.now().strftime("%Y-%m-%d"))
+                            )
+                            conn.commit()
+                            conn.close()
+                            st.session_state.cust_user = check_returning_customer(r_phone.strip())
+                            st.rerun()
+                        else:
+                            st.warning("সবগুলো ঘর পূরণ করুন।")
+
     st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
     catalog_df = get_catalog_df()
     catalog_records = catalog_df.to_dict("records")
@@ -785,19 +753,13 @@ if not st.session_state.admin_logged_in:
         default_phone = st.session_state.cust_user["phone"] if st.session_state.cust_user else ""
 
         fc1, fc2 = st.columns(2)
-        cust_phone = fc1.text_input("মোবাইল নম্বর * (পুরাতন কাস্টমার হলে নম্বর দিলেই ডিসকাউন্ট চালু হবে)", value=default_phone, placeholder="যেমন: 01711000001")
-        
-        # লাইভ চেক: এই নম্বরটি পুরাতন কাস্টমার কি না
+        cust_phone = fc1.text_input("মোবাইল নম্বর *", value=default_phone, placeholder="01XXXXXXXXX")
         live_old_record = st.session_state.cust_user or check_returning_customer(cust_phone)
         if live_old_record and not default_name:
             default_name = live_old_record["name"]
 
         cust_name = fc2.text_input("আপনার নাম / ব্র্যান্ডের নাম *", value=default_name)
 
-        if live_old_record:
-            st.success(f"🎉 স্বাগতম **{live_old_record['name']}**! আমাদের ডাটাবেসে আপনার পূর্বের রেকর্ড পাওয়া গেছে। আপনার জন্য **প্লেট ও ডাই চার্জ ছাড় + ৫% লয়্যালটি ডিসকাউন্ট** অটোমেটিক প্রযোজ্য হয়েছে!")
-
-        # কাস্টমার ডিজাইন ফাইল আপলোডার
         design_upload = st.file_uploader(
             "📂 আপনার বক্সের ডিজাইন / লোগো ফাইল যুক্ত করুন (.pdf, .ai, .psd, .png, .jpg, .zip)",
             type=["pdf", "ai", "eps", "psd", "png", "jpg", "jpeg", "zip"]
@@ -807,7 +769,6 @@ if not st.session_state.admin_logged_in:
         advance_pay = st.number_input("অ্যাডভান্স পেমেন্ট (যদি থাকে - BDT)", min_value=0.0, value=0.0, step=500.0)
         cust_notes = st.text_area("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন নির্দেশনা (ঐচ্ছিক)", height=70)
 
-        # কস্ট ক্যালকুলেশন (পুরাতন কাস্টমারের জন্য বিশেষ ছাড়সহ)
         surface_area = 2 * ((length * width) + (length * height) + (width * height)) * 1.25
         board_cost = surface_area * mat_dict.get(material, 0.045)
         lam_cost = surface_area * finish_dict.get(finish, 0.015)
@@ -816,12 +777,10 @@ if not st.session_state.admin_logged_in:
 
         margin = 1.35 if quantity < 1000 else (1.25 if quantity < 3000 else 1.18)
 
-        # রেগুলার দাম
         reg_unit_cost = board_cost + lam_cost + making_cost + (raw_setup_cost / quantity)
         reg_unit_price = round(reg_unit_cost * margin, 2)
         reg_total_price = round(reg_unit_price * quantity, 2)
 
-        # পুরাতন কাস্টমার হলে প্লেট/ডাই সেটআপ চার্জ ৬০% মওকুফ + ৫% লয়্যালটি ছাড়
         if live_old_record:
             discounted_setup = raw_setup_cost * 0.40
             vip_unit_cost = board_cost + lam_cost + making_cost + (discounted_setup / quantity)
@@ -864,22 +823,21 @@ if not st.session_state.admin_logged_in:
                         estimated_profit, saved_design_name, cust_notes, status_val
                     )
                 )
-                # কাস্টমার টেবিলেও অটো রেকর্ড রাখা যাতে পরের বার অর্ডার করলে ডিসকাউন্ট পায়
                 conn.execute(
                     "INSERT OR IGNORE INTO customers VALUES (?, ?, '1234', ?, 1)",
                     (cust_phone.strip(), cust_name.strip(), datetime.now().strftime("%Y-%m-%d"))
                 )
                 conn.commit()
                 conn.close()
-                st.success(f"🎉 অর্ডার সফলভাবে সম্পন্ন হয়েছে! ট্র্যাকিং আইডি: **{order_id}** (পরবর্তী অর্ডারে আপনার মোবাইল নম্বর `{cust_phone}` দিলেই অটো ডিসকাউন্ট পাবেন!)")
+                st.success(f"🎉 অর্ডার সফলভাবে সম্পন্ন হয়েছে! আপনার ট্র্যাকিং আইডি: **{order_id}**")
 
     with right_col:
         discount_html = ""
         if live_old_record and discount_saved > 0:
             discount_html = (
                 f'<div style="background:rgba(34,197,94,0.15); border:1px solid #4ade80; padding:10px 14px; border-radius:10px; margin-top:12px;">'
-                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">👑 পুরাতন কাস্টমার ডিসকাউন্ট চালু হয়েছে!</div>'
-                f'<div style="color:#cbd5e1; font-size:0.82rem;">রেগুলার মূল্য: <del>৳ {reg_total_price:,.2f}</del> | আপনার সাশ্রয়: <b>৳ {discount_saved:,.2f}</b></div>'
+                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">👑 মেম্বার ডিসকাউন্ট প্রযোজ্য হয়েছে!</div>'
+                f'<div style="color:#cbd5e1; font-size:0.82rem;">রেগুলার মূল্য: <del>৳ {reg_total_price:,.2f}</del> | সাশ্রয়: <b>৳ {discount_saved:,.2f}</b></div>'
                 f'</div>'
             )
 
@@ -909,7 +867,7 @@ if not st.session_state.admin_logged_in:
         )
 
 # ==========================================================
-# PART B: ADMIN BACKEND (যখন স্টাফ পাসওয়ার্ড দিয়ে লগইন করবে)
+# PART B: ADMIN BACKEND (এখানে কাস্টমার লগইন বক্স সম্পূর্ণ বন্ধ)
 # ==========================================================
 else:
     top_adm1, top_adm2 = st.columns([3, 1])
@@ -1165,11 +1123,58 @@ else:
                 conn.close()
                 st.rerun()
 
-    else:
-        st.info("এই সেকশনটি সক্রিয় রয়েছে। ওভারভিউ থেকে সকল সামারি দেখতে পারেন।")
+    elif "ট্রাফিক" in admin_page:
+        with st.form("traffic_update"):
+            u_vis = st.number_input("আজকের ভিজিটর সংখ্যা", value=int(today_vis))
+            u_pvw = st.number_input("পেজ ভিউ সংখ্যা", value=int(page_vw))
+            u_liv = st.number_input("এখন লাইভ ইউজার", value=int(live_usr))
+            if st.form_submit_button("🔄 ট্রাফিক ডাটা সেভ করুন"):
+                set_stat("today_visitors", u_vis)
+                set_stat("page_views", u_pvw)
+                set_stat("live_now", u_liv)
+                st.success("✅ ট্রাফিক ডাটা আপডেট হয়েছে!")
+                st.rerun()
+
+    elif "আগ্রহ" in admin_page:
+        st.dataframe(catalog_df[["id", "title", "code", "material", "clicks"]].sort_values(by="clicks", ascending=False), use_container_width=True)
+
+    elif "সার্চ" in admin_page:
+        sq = st.text_input("অর্ডার আইডি, কাস্টমারের নাম বা ফোন নম্বর লিখুন:")
+        if sq.strip():
+            res_ord = orders_df[
+                orders_df["customer_name"].str.contains(sq, case=False, na=False) |
+                orders_df["phone"].str.contains(sq, case=False, na=False) |
+                orders_df["order_id"].str.contains(sq, case=False, na=False)
+            ]
+            st.dataframe(res_ord, use_container_width=True)
+
+    elif "এসইও" in admin_page:
+        with st.form("seo_form"):
+            s_title = st.text_input("SEO Website Title", value=get_stat("seo_title"))
+            s_keys = st.text_input("Target Keywords", value=get_stat("seo_keywords"))
+            s_desc = st.text_area("Meta Description", value=get_stat("seo_desc"))
+            if st.form_submit_button("🚀 SEO সেটিংস সেভ করুন"):
+                set_stat("seo_title", s_title)
+                set_stat("seo_keywords", s_keys)
+                set_stat("seo_desc", s_desc)
+                st.success("✅ এসইও কনফিগারেশন সেভ হয়েছে!")
+
+    elif "সেটিংস" in admin_page:
+        st.markdown("### ⚙️ সিস্টেম ও কাস্টমার লগইন কন্ট্রোল")
+        with st.form("sys_settings"):
+            cur_login_state = get_stat("enable_customer_login", "1") == "1"
+            toggle_login = st.checkbox("কাস্টমার পেজে 'মেম্বার লগইন' অপশন চালু রাখুন (চেক তুলে দিলে লগইন বক্স সম্পূর্ণ বন্ধ হয়ে যাবে)", value=cur_login_state)
+            f_phn = st.text_input("ফ্যাক্টরি হটলাইন নম্বর", value=get_stat("factory_phone"))
+            ord_clk = st.number_input("মেসেঞ্জার/কল ট্যাপ কাউন্টার", value=int(ord_clicks))
+            if st.form_submit_button("💾 সেটিংস সেভ করুন"):
+                set_stat("enable_customer_login", "1" if toggle_login else "0")
+                set_stat("factory_phone", f_phn)
+                set_stat("order_clicks", ord_clk)
+                st.success("✅ সেটিংস সফলভাবে আপডেট হয়েছে!")
+                st.rerun()
 
 # ==========================================================
-# ৬. DISCREET FOOTER STAFF LOGIN (সবার নিচে ছোট স্টাফ লগইন)
+# ৬. DISCREET FOOTER STAFF LOGIN
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 15px 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
 f_col1, f_col2 = st.columns([3, 1])
