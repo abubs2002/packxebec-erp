@@ -382,7 +382,7 @@ if "cust_user" not in st.session_state:
     st.session_state.cust_user = None
 
 # ==========================================================
-# ৩. COMPACT LOGO & RESPONSIVE ZOOMABLE PRODUCT CARDS CSS
+# ৩. COMPACT LOGO & ZOOMABLE PRODUCT CARDS CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -397,7 +397,6 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 
-/* ওপরের অতিরিক্ত ফাঁকা জায়গা কমিয়ে লোগো সুন্দরভাবে ফিট করা */
 .block-container {
     padding-top: 1.5rem !important;
     padding-bottom: 2rem !important;
@@ -416,7 +415,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 600 !important;
 }
 
-/* ছোট ও স্টাইলিশ কম্প্যাক্ট লোগো ব্যানার */
 .hero-logo-banner {
     background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(19, 28, 49, 0.95) 100%);
     border: 1px solid #26334d;
@@ -552,8 +550,8 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 }
 .cat-img-box {
     background: #0b1120;
+    height: 220px;
     width: 100%;
-    aspect-ratio: 4 / 3;
     overflow: hidden;
     border-bottom: 1px solid #1e293b;
     position: relative;
@@ -565,22 +563,21 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     cursor: zoom-in;
 }
-/* মাউস নিলে বা টাচ করলে ছবি বড় (Zoom In) হবে এবং সরালে ছোট (Zoom Out) হবে */
 .cat-card:hover .cat-img-box img,
 .cat-img-box img:active {
-    transform: scale(1.22);
+    transform: scale(1.24);
 }
 .cat-info {
     padding: 14px 16px;
 }
 .cat-title {
-    font-size: 1rem;
+    font-size: 0.96rem;
     font-weight: 700;
     color: #f8fafc !important;
     margin: 0;
 }
 .cat-sub {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #c084fc !important;
     font-weight: 600;
     margin-top: 4px;
@@ -642,7 +639,7 @@ finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
 # ==========================================================
-# ৪. COMPACT BRAND LOGO HEADER (ছোট ও রেসপনসিভ লোগো)
+# ৪. COMPACT BRAND LOGO HEADER
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
@@ -758,32 +755,19 @@ if not st.session_state.admin_logged_in:
                         else:
                             st.warning("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।")
 
-    # গ্যালারি হেডার ও জুম ইন / জুম আউট কন্ট্রোলার
-    g_head1, g_head2 = st.columns([2.2, 1])
-    with g_head1:
-        st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
-    with g_head2:
-        zoom_mode = st.select_slider(
-            "🔍 ছবির সাইজ (Zoom In / Out):",
-            options=["Normal (4 Cols)", "Large (3 Cols)", "Extra Large (2 Cols)"],
-            value="Large (3 Cols)"
-        )
-
-    col_count = 4 if "4" in zoom_mode else (3 if "3" in zoom_mode else 2)
-    img_height = "205px" if col_count == 4 else ("255px" if col_count == 3 else "340px")
-
+    st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
     catalog_df = get_catalog_df()
     catalog_records = catalog_df.to_dict("records")
 
-    for i in range(0, len(catalog_records), col_count):
-        row_items = catalog_records[i:i+col_count]
-        cols = st.columns(col_count, gap="medium")
+    for i in range(0, len(catalog_records), 4):
+        row_items = catalog_records[i:i+4]
+        cols = st.columns(4, gap="medium")
         for idx, item in enumerate(row_items):
             with cols[idx]:
                 img_src = render_img_src(item["img_path"])
                 st.markdown(
                     f'<div class="cat-card">'
-                    f'<div class="cat-img-box" style="height:{img_height};"><img src="{img_src}"></div>'
+                    f'<div class="cat-img-box"><img src="{img_src}"></div>'
                     f'<div class="cat-info">'
                     f'<p class="cat-title">{item["title"]}</p>'
                     f'<p class="cat-sub">{item["code"]}</p>'
