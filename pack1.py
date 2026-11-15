@@ -119,7 +119,7 @@ def init_db():
         ("whatsapp_number", "01776008987"),
         ("fb_page_url", "https://www.facebook.com/packxebec"),
         ("fb_messenger_url", "https://m.me/packxebec"),
-        ("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)"),
+        ("factory_address", "102 Agasadek Road, Dhaka-1000"),
         ("factory_email", "contact@packxebec.com"),
         ("enable_customer_login", "1"),
         ("admin_password", "admin123")
@@ -129,10 +129,14 @@ def init_db():
         default_stats
     )
 
-    # আগে পুরনো প্লেসহোল্ডার নম্বর সেভ থাকলে তা অটোমেটিক আসল নম্বরে আপডেট করে দেওয়া
+    # আগে পুরনো প্লেসহোল্ডার নম্বর বা ঠিকানা সেভ থাকলে তা অটোমেটিক আসল তথ্যে আপডেট করে দেওয়া
     c.execute(
         "UPDATE site_stats SET stat_val='01776008987' "
         "WHERE stat_key='factory_phone' AND stat_val IN ('01XXXXXXXXX', '+880 17XX-XXXXXX')"
+    )
+    c.execute(
+        "UPDATE site_stats SET stat_val='102 Agasadek Road, Dhaka-1000' "
+        "WHERE stat_key='factory_address' AND stat_val LIKE 'Dhaka, Bangladesh%'"
     )
 
     c.execute("SELECT COUNT(*) FROM custom_options")
@@ -694,11 +698,11 @@ mat_options = list(mat_dict.keys())
 finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
-# কন্টাক্ট ও ফেসবুক ডাটা লোড (ডিফল্ট 01776008987)
+# কন্টাক্ট, ঠিকানা ও ফেসবুক ডাটা লোড
 fb_url = get_stat("fb_page_url", "https://www.facebook.com/packxebec")
 msg_url = get_stat("fb_messenger_url", "https://m.me/packxebec")
 fac_phone = get_stat("factory_phone", "01776008987")
-fac_addr = get_stat("factory_address", "Dhaka, Bangladesh (Factory & Studio: Custom Packaging Zone, Dhaka)")
+fac_addr = get_stat("factory_address", "102 Agasadek Road, Dhaka-1000")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
 # ==========================================================
@@ -729,6 +733,7 @@ st.markdown(
     f'<a href="{fb_url}" target="_blank" class="social-pill">📘 fb.com/packxebec</a>'
     f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">💬 WhatsApp: {fac_phone}</a>'
     f'<a href="tel:{fac_phone}" class="social-pill">📞 Call: {fac_phone}</a>'
+    f'<span class="social-pill">📍 {fac_addr}</span>'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True
