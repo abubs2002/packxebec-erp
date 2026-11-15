@@ -23,10 +23,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-DB_NAME = "packxebec_erp_v2.db"
+DB_NAME = "packxebec_erp_v3.db"
 
 # ==========================================================
-# ১. SQLITE DATABASE ENGINE (সব ফিচার ও হিসাবের জন্য)
+# ১. SQLITE DATABASE ENGINE
 # ==========================================================
 def get_conn():
     return sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -35,7 +35,6 @@ def init_db():
     conn = get_conn()
     c = conn.cursor()
 
-    # অর্ডার ও হিসাব টেবিল (পেইড, ডিউ ও কোটেশন ট্র্যাকিংসহ)
     c.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             order_id TEXT PRIMARY KEY,
@@ -59,7 +58,6 @@ def init_db():
         )
     """)
 
-    # গ্যালারি ও প্রোডাক্ট টেবিল (ক্লিক ট্র্যাকিংসহ)
     c.execute("""
         CREATE TABLE IF NOT EXISTS catalog (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +75,6 @@ def init_db():
         )
     """)
 
-    # কাস্টম অপশন ও ক্যাটাগরি রেট টেবিল
     c.execute("""
         CREATE TABLE IF NOT EXISTS custom_options (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,7 +84,6 @@ def init_db():
         )
     """)
 
-    # ওয়েবসাইট মেট্রিক্স ও এসইও টেবিল
     c.execute("""
         CREATE TABLE IF NOT EXISTS site_stats (
             stat_key TEXT PRIMARY KEY,
@@ -95,7 +91,6 @@ def init_db():
         )
     """)
 
-    # ডিফল্ট সাইট মেট্রিক্স (স্ক্রিনশটের সাথে মিল রেখে)
     default_stats = [
         ("today_visitors", "31"),
         ("page_views", "47"),
@@ -112,7 +107,6 @@ def init_db():
         default_stats
     )
 
-    # ডিফল্ট ক্যাটাগরি ও অপশন
     c.execute("SELECT COUNT(*) FROM custom_options")
     if c.fetchone()[0] == 0:
         default_opts = [
@@ -138,11 +132,10 @@ def init_db():
             default_opts
         )
 
-    # ডিফল্ট ৮টি রিয়েল বক্স স্যাম্পল
     c.execute("SELECT COUNT(*) FROM catalog")
     if c.fetchone()[0] == 0:
-        u1 = "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=600"
-        u2 = "https://images.unsplash.com/photo-1589365278144-c9e705f7fd32?w=600"
+        u1 = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
+        u2 = "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=600"
         u3 = "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?w=600"
         u4 = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600"
         u5 = "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600"
@@ -183,7 +176,6 @@ def init_db():
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, default_catalog)
 
-    # ডিফল্ট ডেমো অর্ডার (যাতে ওভারভিউ পেজে শুরুতেই সুন্দর ডাটা দেখায়)
     c.execute("SELECT COUNT(*) FROM orders")
     if c.fetchone()[0] == 0:
         demo_orders = [
@@ -213,7 +205,6 @@ def init_db():
 
 init_db()
 
-# ডাটাবেস হেল্পার ফাংশন
 def get_stat(key, default="0"):
     conn = get_conn()
     c = conn.cursor()
@@ -259,7 +250,7 @@ def render_img_src(img_path):
             b64 = base64.b64encode(f.read()).decode()
             ext = "png" if p.lower().endswith(".png") else "jpeg"
             return f"data:image/{ext};base64,{b64}"
-    return "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=600"
+    return "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
 
 def svg_to_b64(svg_str):
     b64 = base64.b64encode(svg_str.encode("utf-8")).decode("utf-8")
@@ -271,7 +262,7 @@ def to_bn_num(val):
     return str(val).translate(str.maketrans(en, bn))
 
 # ==========================================================
-# ২. PACKXEBEC BRAND LOGO (Short Multi-Line SVG)
+# ২. PACKXEBEC BRAND LOGO
 # ==========================================================
 DARK_LOGO_PARTS = [
     '<svg viewBox="0 0 500 430" xmlns="http://www.w3.org/2000/svg">',
@@ -326,9 +317,11 @@ if "sel_dims" not in st.session_state:
     st.session_state.sel_dims = (6.0, 4.0, 2.5)
 if "active_sample" not in st.session_state:
     st.session_state.active_sample = "300 GSM Swedish Tuck Box"
+if "admin_logged_in" not in st.session_state:
+    st.session_state.admin_logged_in = False
 
 # ==========================================================
-# ৩. DARK SLATE UI & KARBAR-STYLE OVERVIEW GRID CSS
+# ৩. DARK SLATE UI CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -388,8 +381,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     height: 4px;
     background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
 }
-
-/* আপনার রেফারেন্স ছবির ওভারভিউ বক্স স্টাইল (Dark Neon Edition) */
 .ov-card {
     background: linear-gradient(145deg, #0f172a 0%, #15203b 100%);
     border: 1px dashed #3b82f6;
@@ -414,16 +405,8 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     color: #cbd5e1;
     margin-bottom: 14px;
 }
-.ov-link {
-    color: #60a5fa;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-.ov-sub {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    margin-bottom: 4px;
-}
+.ov-link { color: #60a5fa; font-size: 0.82rem; font-weight: 600; }
+.ov-sub { font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
 .ov-big {
     font-size: 2.35rem;
     font-weight: 900;
@@ -433,13 +416,7 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     line-height: 1.15;
     margin: 4px 0 8px 0;
 }
-.ov-foot {
-    font-size: 0.78rem;
-    color: #94a3b8;
-    margin-top: 8px;
-    line-height: 1.4;
-}
-
+.ov-foot { font-size: 0.78rem; color: #94a3b8; margin-top: 8px; line-height: 1.4; }
 .live-badge {
     background: rgba(34, 197, 94, 0.14);
     color: #4ade80 !important;
@@ -487,26 +464,11 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     overflow: hidden;
     border-bottom: 1px solid #1e293b;
 }
-.cat-img-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+.cat-img-box img { width: 100%; height: 100%; object-fit: cover; }
 .cat-info { padding: 12px 14px; }
-.cat-title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #f8fafc !important;
-    margin: 0;
-}
-.cat-sub {
-    font-size: 0.75rem;
-    color: #c084fc !important;
-    font-weight: 600;
-    margin-top: 4px;
-}
+.cat-title { font-size: 0.9rem; font-weight: 700; color: #f8fafc !important; margin: 0; }
+.cat-sub { font-size: 0.75rem; color: #c084fc !important; font-weight: 600; margin-top: 4px; }
 
-/* ডার্ক ইনপুট ফিক্স */
 div[data-baseweb="select"] > div,
 div[data-baseweb="input"],
 div[data-baseweb="base-input"],
@@ -518,9 +480,7 @@ div[data-baseweb="textarea"] {
     color: #ffffff !important;
 }
 div[data-baseweb="select"] span,
-div[data-baseweb="select"] div {
-    color: #ffffff !important;
-}
+div[data-baseweb="select"] div { color: #ffffff !important; }
 div[data-baseweb="popover"],
 ul[role="listbox"],
 li[role="option"] {
@@ -554,7 +514,6 @@ div.stButton > button, div[data-testid="stFormSubmitButton"] > button {
 </style>
 """, unsafe_allow_html=True)
 
-# ডাটাবেস থেকে অপশন লোড
 box_dict = get_options_dict("box_type")
 mat_dict = get_options_dict("material")
 finish_dict = get_options_dict("finish")
@@ -566,52 +525,78 @@ finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
 # ==========================================================
-# SIDEBAR: পোর্টাল সুইচ + স্ক্রিনশটের হুবহু অ্যাডমিন মেনু
+# SIDEBAR: ডিফল্ট কাস্টমার ভিউ + সিকিউর অ্যাডমিন লগইন
 # ==========================================================
 with st.sidebar:
     st.markdown(
         f'<div class="dark-glass-card" style="padding:16px 12px; text-align:center; margin-bottom:16px;">'
         f'<img src="{LOGO_SRC}" style="width:155px; height:auto; border-radius:8px;">'
-        f'<div style="margin-top:8px;"><span class="live-badge">● ERP Studio v2.0</span></div>'
+        f'<div style="margin-top:8px;"><span class="live-badge">● Online Ordering Active</span></div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    portal_mode = st.radio(
-        "পোর্টাল মোড সিলেক্ট করুন:",
-        ["🛒 Customer Studio (ফ্রন্টএন্ড)", "🔐 Admin Backend (ব্যাকএন্ড)"],
-        index=1
+    st.markdown(
+        '<div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); font-size:0.82rem; margin-bottom:16px;">'
+        '<div style="color:#60a5fa; font-weight:700; margin-bottom:4px;">📦 প্যাকজেবেক ফ্যাক্টরি স্ট্যান্ডার্ড</div>'
+        '<div style="color:#cbd5e1;">✨ 300 GSM Swedish Board</div>'
+        '<div style="color:#cbd5e1;">🎨 4-Color CMYK Offset Print</div>'
+        '<div style="color:#cbd5e1;">💎 Glossy / Matte Lamination</div>'
+        '</div>',
+        unsafe_allow_html=True
     )
 
-    admin_page = "💠 ওভারভিউ"
-    if portal_mode == "🔐 Admin Backend (ব্যাকএন্ড)":
-        st.markdown("<hr style='margin:12px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
-        password = st.text_input("🔑 Admin Password:", type="password", value="admin123")
-        
-        st.markdown(
-            "<div style='color:#60a5fa; font-size:0.78rem; font-weight:700; margin:10px 0 4px 0;'>[ ব্যবসা ও ওয়েবসাইট মেনু ]</div>",
-            unsafe_allow_html=True
+    # কাস্টমারদের থেকে লুকানো স্টাফ লগইন সেকশন
+    admin_page = None
+    with st.expander("🔐 Admin Login (Staff Only)", expanded=st.session_state.admin_logged_in):
+        if not st.session_state.admin_logged_in:
+            pwd_input = st.text_input("অ্যাডমিন পাসওয়ার্ড দিন:", type="password", placeholder="Password...")
+            if st.button("🔑 লগইন করুন"):
+                if pwd_input == "admin123":
+                    st.session_state.admin_logged_in = True
+                    st.rerun()
+                else:
+                    st.error("❌ ভুল পাসওয়ার্ড!")
+        else:
+            st.success("✅ Admin Mode Active")
+            if st.button("🚪 লগআউট (Back to Customer View)"):
+                st.session_state.admin_logged_in = False
+                st.rerun()
+
+    if st.session_state.admin_logged_in:
+        st.markdown("<hr style='margin:10px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+        portal_mode = st.radio(
+            "ভিউ মোড:",
+            ["🛒 Customer Studio (ফ্রন্টএন্ড)", "🔐 Admin Backend (ব্যাকএন্ড)"],
+            index=1
         )
-        admin_page = st.radio(
-            "ব্যাকএন্ড নেভিগেশন:",
-            [
-                "💠 ওভারভিউ",
-                "📑 অর্ডার (Orders)",
-                "👥 কাস্টমার (Customers)",
-                "💳 হিসাব (Accounts & Due)",
-                "📦 প্রোডাক্ট ও ছবি (Products CMS)",
-                "🏷️ ক্যাটাগরি ও রেট (Categories)",
-                "📊 ট্রাফিক (Traffic)",
-                "✨ প্রোডাক্টের আগ্রহ (Interest)",
-                "🔍 সার্চ (Search)",
-                "🌐 এসইও (SEO)",
-                "⚙️ সেটিংস (Settings)"
-            ],
-            label_visibility="collapsed"
-        )
+        if portal_mode == "🔐 Admin Backend (ব্যাকএন্ড)":
+            st.markdown(
+                "<div style='color:#60a5fa; font-size:0.78rem; font-weight:700; margin:10px 0 4px 0;'>[ ব্যবসা ও ওয়েবসাইট মেনু ]</div>",
+                unsafe_allow_html=True
+            )
+            admin_page = st.radio(
+                "ব্যাকএন্ড নেভিগেশন:",
+                [
+                    "💠 ওভারভিউ",
+                    "📑 অর্ডার (Orders)",
+                    "👥 কাস্টমার (Customers)",
+                    "💳 হিসাব (Accounts & Due)",
+                    "📦 প্রোডাক্ট ও ছবি (Products CMS)",
+                    "🏷️ ক্যাটাগরি ও রেট (Categories)",
+                    "📊 ট্রাফিক (Traffic)",
+                    "✨ প্রোডাক্টের আগ্রহ (Interest)",
+                    "🔍 সার্চ (Search)",
+                    "🌐 এসইও (SEO)",
+                    "⚙️ সেটিংস (Settings)"
+                ],
+                label_visibility="collapsed"
+            )
+    else:
+        portal_mode = "🛒 Customer Studio (ফ্রন্টএন্ড)"
 
 # ==========================================================
-# PART A: CUSTOMER STUDIO (কাস্টমার অর্ডার ফ্রন্টএন্ড)
+# PART A: CUSTOMER STUDIO (ডিফল্ট কাস্টমার ভিউ)
 # ==========================================================
 if portal_mode == "🛒 Customer Studio (ফ্রন্টএন্ড)":
     st.markdown(
@@ -761,408 +746,361 @@ if portal_mode == "🛒 Customer Studio (ফ্রন্টএন্ড)":
         )
 
 # ==========================================================
-# PART B: ADMIN BACKEND (আপনার স্ক্রিনশটের হুবহু ১১টি অপশন)
+# PART B: ADMIN BACKEND (শুধুমাত্র পাসওয়ার্ড দিয়ে লগইন করলে দেখা যাবে)
 # ==========================================================
-else:
-    if password != "admin123":
-        st.warning("সঠিক পাসওয়ার্ড দিন (ডিফল্ট: `admin123`)")
-    else:
-        orders_df = get_orders_df()
-        catalog_df = get_catalog_df()
+elif portal_mode == "🔐 Admin Backend (ব্যাকএন্ড)" and st.session_state.admin_logged_in:
+    orders_df = get_orders_df()
+    catalog_df = get_catalog_df()
 
-        # অটোমেটিক ক্যালকুলেশন (ওভারভিউ কার্ডের জন্য)
-        real_orders = orders_df[orders_df["status"] != "Quotation"] if not orders_df.empty else orders_df
-        quote_orders = orders_df[orders_df["status"] == "Quotation"] if not orders_df.empty else orders_df
+    real_orders = orders_df[orders_df["status"] != "Quotation"] if not orders_df.empty else orders_df
+    quote_orders = orders_df[orders_df["status"] == "Quotation"] if not orders_df.empty else orders_df
 
-        total_due = real_orders["due_amount"].sum() if not real_orders.empty else 0.0
-        total_collected = real_orders["paid_amount"].sum() if not real_orders.empty else 0.0
-        total_sales = real_orders["total_price"].sum() if not real_orders.empty else 0.0
-        order_count = len(real_orders)
-        quote_count = len(quote_orders)
+    total_due = real_orders["due_amount"].sum() if not real_orders.empty else 0.0
+    total_collected = real_orders["paid_amount"].sum() if not real_orders.empty else 0.0
+    total_sales = real_orders["total_price"].sum() if not real_orders.empty else 0.0
+    order_count = len(real_orders)
+    quote_count = len(quote_orders)
 
-        today_vis = get_stat("today_visitors", "31")
-        page_vw = get_stat("page_views", "47")
-        live_usr = get_stat("live_now", "0")
-        ord_clicks = get_stat("order_clicks", "203")
+    today_vis = get_stat("today_visitors", "31")
+    page_vw = get_stat("page_views", "47")
+    live_usr = get_stat("live_now", "0")
+    ord_clicks = get_stat("order_clicks", "203")
 
-        # সেরা প্রোডাক্ট বের করা
-        best_prod_name = "১২ x ৯ x ৪ কাস্টম ডাই-কাট বক্স"
-        best_prod_qty = 6000
-        best_prod_rev = 75000.0
-        if not real_orders.empty:
-            top_row = real_orders.sort_values(by="total_price", ascending=False).iloc[0]
-            best_prod_name = f"{top_row['dimensions']} {top_row['box_type'].split('(')[0].strip()}"
-            best_prod_qty = int(top_row["quantity"])
-            best_prod_rev = float(top_row["total_price"])
+    best_prod_name = "১২ x ৯ x ৪ কাস্টম ডাই-কাট বক্স"
+    best_prod_qty = 6000
+    best_prod_rev = 75000.0
+    if not real_orders.empty:
+        top_row = real_orders.sort_values(by="total_price", ascending=False).iloc[0]
+        best_prod_name = f"{top_row['dimensions']} {top_row['box_type'].split('(')[0].strip()}"
+        best_prod_qty = int(top_row["quantity"])
+        best_prod_rev = float(top_row["total_price"])
 
-        # ----------------------------------------------------
-        # ১. ওভারভিউ (SCREENSHOT EXACT 6-CARD DASHBOARD)
-        # ----------------------------------------------------
-        if admin_page == "💠 ওভারভিউ":
+    if admin_page == "💠 ওভারভিউ":
+        st.markdown(
+            '<div style="margin-bottom:18px;">'
+            '<div style="font-size:2.2rem; font-weight:900; color:#60a5fa; letter-spacing:-0.5px;">ওভারভিউ</div>'
+            '<div style="font-size:0.88rem; color:#94a3b8;">মাসের হিসাব মাসের ১ তারিখ থেকে আজ পর্যন্ত • packxebec স্মার্ট ড্যাশবোর্ড</div>'
+            '<hr style="border-color:#2563eb; margin-top:10px;">'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        r1_c1, r1_c2, r1_c3 = st.columns(3, gap="medium")
+        with r1_c1:
             st.markdown(
-                '<div style="margin-bottom:18px;">'
-                '<div style="font-size:2.2rem; font-weight:900; color:#60a5fa; letter-spacing:-0.5px;">ওভারভিউ</div>'
-                '<div style="font-size:0.88rem; color:#94a3b8;">মাসের হিসাব মাসের ১ তারিখ থেকে আজ পর্যন্ত • packxebec স্মার্ট ড্যাশবোর্ড</div>'
-                '<hr style="border-color:#2563eb; margin-top:10px;">'
-                '</div>',
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ মোট বাকি ]</span><span class="ov-link">হিসাব →</span></div>'
+                f'<div class="ov-sub">কাস্টমারদের কাছে পাওনা</div>'
+                f'<div class="ov-big">৳{to_bn_num(f"{total_due:,.0f}")}</div>'
+                f'<div class="ov-foot">সব কাস্টমার মিলিয়ে এখন পর্যন্ত যত টাকা বাকি।</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with r1_c2:
+            st.markdown(
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ এই মাসে আদায় ]</span><span class="ov-link">হিসাব →</span></div>'
+                f'<div class="ov-sub">হাতে পাওয়া টাকা</div>'
+                f'<div class="ov-big">৳{to_bn_num(f"{total_collected:,.0f}")}</div>'
+                f'<div class="ov-foot">এই মাসে কাস্টমারদের কাছ থেকে যত টাকা পাওয়া গেছে।</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with r1_c3:
+            st.markdown(
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ এই মাসের অর্ডার ও বিক্রি ]</span><span class="ov-link">অর্ডার →</span></div>'
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<div><div class="ov-sub">অর্ডার</div><div class="ov-big" style="font-size:1.9rem;">{to_bn_num(order_count)}</div></div>'
+                f'<div><div class="ov-sub">বিক্রি</div><div class="ov-big" style="font-size:1.9rem;">৳{to_bn_num(f"{total_sales:,.0f}")}</div></div>'
+                f'</div>'
+                f'<div class="ov-sub" style="margin-top:4px;">খোলা কোটেশন: <strong style="color:#f472b6; font-size:1.1rem;">{to_bn_num(quote_count)}</strong></div>'
+                f'<div class="ov-foot">দাম জানানো হয়েছে, কাস্টমার এখনো হ্যাঁ বলেননি।</div>'
+                f'</div>',
                 unsafe_allow_html=True
             )
 
-            # প্রথম সারি: মোট বাকি | এই মাসে আদায় | এই মাসের অর্ডার ও বিক্রি
-            r1_c1, r1_c2, r1_c3 = st.columns(3, gap="medium")
-
-            with r1_c1:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ মোট বাকি ]</span><span class="ov-link">হিসাব →</span></div>'
-                    f'<div class="ov-sub">কাস্টমারদের কাছে পাওনা</div>'
-                    f'<div class="ov-big">৳{to_bn_num(f"{total_due:,.0f}")}</div>'
-                    f'<div class="ov-foot">সব কাস্টমার মিলিয়ে এখন পর্যন্ত যত টাকা বাকি।</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            with r1_c2:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ এই মাসে আদায় ]</span><span class="ov-link">হিসাব →</span></div>'
-                    f'<div class="ov-sub">হাতে পাওয়া টাকা</div>'
-                    f'<div class="ov-big">৳{to_bn_num(f"{total_collected:,.0f}")}</div>'
-                    f'<div class="ov-foot">এই মাসে কাস্টমারদের কাছ থেকে যত টাকা পাওয়া গেছে।</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            with r1_c3:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ এই মাসের অর্ডার ও বিক্রি ]</span><span class="ov-link">অর্ডার →</span></div>'
-                    f'<div style="display:flex; justify-content:space-between; align-items:center;">'
-                    f'<div><div class="ov-sub">অর্ডার</div><div class="ov-big" style="font-size:1.9rem;">{to_bn_num(order_count)}</div></div>'
-                    f'<div><div class="ov-sub">বিক্রি</div><div class="ov-big" style="font-size:1.9rem;">৳{to_bn_num(f"{total_sales:,.0f}")}</div></div>'
-                    f'</div>'
-                    f'<div class="ov-sub" style="margin-top:4px;">খোলা কোটেশন: <strong style="color:#f472b6; font-size:1.1rem;">{to_bn_num(quote_count)}</strong></div>'
-                    f'<div class="ov-foot">দাম জানানো হয়েছে, কাস্টমার এখনো হ্যাঁ বলেননি।</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            # দ্বিতীয় সারি: আজকের ভিজিটর | অর্ডার ক্লিক বনাম অর্ডার | এই মাসের সেরা প্রোডাক্ট
-            r2_c1, r2_c2, r2_c3 = st.columns(3, gap="medium")
-
-            with r2_c1:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ আজকের ভিজিটর ]</span><span class="ov-link">ট্রাফিক →</span></div>'
-                    f'<div style="display:flex; gap:45px; align-items:center;">'
-                    f'<div><div class="ov-sub">আজ ভিজিটর</div><div class="ov-big">{to_bn_num(today_vis)}</div></div>'
-                    f'<div><div class="ov-sub">এখন সাইটে</div><div class="ov-big">{to_bn_num(live_usr)}</div></div>'
-                    f'</div>'
-                    f'<div class="ov-foot">পেজ ভিউ: {to_bn_num(page_vw)} &nbsp;|&nbsp; গত ৫ মিনিটে অ্যাক্টিভ</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            with r2_c2:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ অর্ডার ক্লিক বনাম অর্ডার ]</span><span class="ov-link">আগ্রহ →</span></div>'
-                    f'<div style="display:flex; gap:45px; align-items:center;">'
-                    f'<div><div class="ov-sub">মেসেঞ্জার/কল/ক্লিক</div><div class="ov-big">{to_bn_num(ord_clicks)}</div></div>'
-                    f'<div><div class="ov-sub">খাতায় তোলা অর্ডার</div><div class="ov-big">{to_bn_num(order_count)}</div></div>'
-                    f'</div>'
-                    f'<div class="ov-foot">সাইটের কাস্টমাইজ বা কল বাটনে যতবার ট্যাপ হয়েছে, আর পাশে যত অর্ডার খাতায় তোলা হয়েছে।</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            with r2_c3:
-                st.markdown(
-                    f'<div class="ov-card">'
-                    f'<div class="ov-header"><span>[ এই মাসের সেরা প্রোডাক্ট ]</span><span class="ov-link">আগ্রহ →</span></div>'
-                    f'<div style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin-bottom:10px;">{best_prod_name}</div>'
-                    f'<div style="display:flex; justify-content:space-between; align-items:center;">'
-                    f'<div><div class="ov-sub">বিক্রি (পিস)</div><div class="ov-big" style="font-size:1.85rem;">{to_bn_num(f"{best_prod_qty:,}")}</div></div>'
-                    f'<div><div class="ov-sub">বিক্রির টাকা</div><div class="ov-big" style="font-size:1.85rem;">৳{to_bn_num(f"{best_prod_rev:,.0f}")}</div></div>'
-                    f'</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-        # ----------------------------------------------------
-        # ২. অর্ডার (ORDERS & QUOTATIONS MANAGEMENT)
-        # ----------------------------------------------------
-        elif admin_page == "📑 অর্ডার (Orders)":
-            st.markdown("### 📑 অর্ডার এবং খোলা কোটেশন ম্যানেজমেন্ট")
-            if orders_df.empty:
-                st.info("এখনো কোনো অর্ডার নেই।")
-            else:
-                st.dataframe(orders_df, use_container_width=True)
-                csv_data = orders_df.to_csv(index=False).encode("utf-8")
-                st.download_button("📥 এক্সেল / CSV ডাউনলোড করুন", data=csv_data, file_name="packxebec_orders.csv", mime="text/csv")
-
-                st.markdown("---")
-                st.markdown("#### ⚙️ অর্ডার স্ট্যাটাস পরিবর্তন করুন")
-                c1, c2, c3 = st.columns(3)
-                sel_ord = c1.selectbox("Order ID সিলেক্ট করুন", orders_df["order_id"].tolist())
-                new_st = c2.selectbox("নতুন স্ট্যাটাস", [
-                    "Pending", "Quotation", "In Printing",
-                    "Glossy/Matte Lamination", "Die-Cutting", "Ready", "Delivered"
-                ])
-                c3.write("")
-                c3.write("")
-                if c3.button("🔄 স্ট্যাটাস আপডেট করুন"):
-                    conn = get_conn()
-                    conn.execute("UPDATE orders SET status=? WHERE order_id=?", (new_st, sel_ord))
-                    conn.commit()
-                    conn.close()
-                    st.success("✅ স্ট্যাটাস আপডেট হয়েছে!")
-                    st.rerun()
-
-        # ----------------------------------------------------
-        # ৩. কাস্টমার (CUSTOMER DIRECTORY & LEDGER)
-        # ----------------------------------------------------
-        elif admin_page == "👥 কাস্টমার (Customers)":
-            st.markdown("### 👥 কাস্টমার তালিকা ও লেনদেন সামারি")
-            if orders_df.empty:
-                st.info("কোনো কাস্টমার ডাটা নেই।")
-            else:
-                cust_summary = orders_df.groupby(["customer_name", "phone"]).agg(
-                    মোট_অর্ডার=("order_id", "count"),
-                    মোট_বিল=("total_price", "sum"),
-                    মোট_জমা=("paid_amount", "sum"),
-                    মোট_বাকি=("due_amount", "sum")
-                ).reset_index()
-                st.dataframe(cust_summary, use_container_width=True)
-
-        # ----------------------------------------------------
-        # ৪. হিসাব (ACCOUNTS: মোট বাকি ও আদায় আপডেট)
-        # ----------------------------------------------------
-        elif admin_page == "💳 হিসাব (Accounts & Due)":
-            st.markdown("### 💳 হিসাব খাতা (মোট বাকি ও আদায় ম্যানেজার)")
-            k1, k2, k3 = st.columns(3)
-            k1.metric("মোট বিক্রি (Total Billed)", f"৳ {total_sales:,.0f}")
-            k2.metric("এই মাসে আদায় (Collected)", f"৳ {total_collected:,.0f}")
-            k3.metric("মোট বাকি (Total Due)", f"৳ {total_due:,.0f}")
-
-            st.markdown("---")
-            st.markdown("#### 💰 কাস্টমারের বকেয়া টাকা জমা নিন (Update Payment)")
-            if not orders_df.empty:
-                p_c1, p_c2, p_c3 = st.columns(3)
-                pay_ord = p_c1.selectbox("Order ID সিলেক্ট করুন", orders_df["order_id"].tolist())
-                cur_row = orders_df[orders_df["order_id"] == pay_ord].iloc[0]
-                p_c2.info(f"কাস্টমার: **{cur_row['customer_name']}** | মোট বিল: ৳{cur_row['total_price']} | বর্তমান বাকি: **৳{cur_row['due_amount']}**")
-                new_pay = p_c3.number_input("নতুন জমা টাকা (BDT)", min_value=0.0, value=float(cur_row["paid_amount"]), step=500.0)
-                if st.button("✅ পেমেন্ট আপডেট করুন"):
-                    new_due = max(0.0, float(cur_row["total_price"]) - new_pay)
-                    conn = get_conn()
-                    conn.execute(
-                        "UPDATE orders SET paid_amount=?, due_amount=? WHERE order_id=?",
-                        (new_pay, new_due, pay_ord)
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success("🎉 পেমেন্ট ও বাকি হিসাব আপডেট হয়েছে!")
-                    st.rerun()
-
-        # ----------------------------------------------------
-        # ৫. প্রোডাক্ট ও ছবি (PRODUCTS & PHOTO UPLOADER CMS)
-        # ----------------------------------------------------
-        elif admin_page == "📦 প্রোডাক্ট ও ছবি (Products CMS)":
-            st.markdown("### 📦 প্রোডাক্ট গ্যালারি ও ছবি আপলোডার (Add/Edit Box Photos)")
-            col_add, col_edit = st.columns([1.1, 1], gap="large")
-
-            with col_add:
-                st.markdown("#### ➕ নতুন বক্স ও ছবি যোগ করুন")
-                with st.form("cms_add_box"):
-                    new_title = st.text_input("বক্সের নাম *", placeholder="যেমন: 300 GSM Swedish Perfume Box")
-                    new_code = st.text_input("কোড ও সাবটাইটেল *", placeholder="PX-109 • Swedish Board")
-                    up_file = st.file_uploader("ছবি আপলোড করুন (.jpg, .png, .webp)", type=["jpg", "jpeg", "png", "webp"])
-                    or_url = st.text_input("অথবা ছবির অনলাইন লিংক দিন:", placeholder="https://...")
-
-                    gc1, gc2 = st.columns(2)
-                    g_box = gc1.selectbox("বক্সের ধরন", box_options)
-                    g_mat = gc2.selectbox("ম্যাটেরিয়াল", mat_options)
-                    gc3, gc4 = st.columns(2)
-                    g_fin = gc3.selectbox("ফিনিশিং", finish_options)
-                    g_prt = gc4.selectbox("প্রিন্টিং", print_options)
-
-                    d1, d2, d3 = st.columns(3)
-                    g_l = d1.number_input("দৈর্ঘ্য (L)", value=6.0, step=0.5)
-                    g_w = d2.number_input("প্রস্থ (W)", value=4.0, step=0.5)
-                    g_h = d3.number_input("উচ্চতা (H)", value=3.0, step=0.5)
-
-                    if st.form_submit_button("✨ প্রোডাক্ট গ্যালারিতে সেভ করুন"):
-                        if not new_title.strip():
-                            st.error("বক্সের নাম দিন।")
-                        else:
-                            saved_path = "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=600"
-                            if up_file is not None:
-                                ext = os.path.splitext(up_file.name)[1]
-                                fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-                                saved_path = os.path.join("product_images", fname)
-                                with open(saved_path, "wb") as f:
-                                    f.write(up_file.getbuffer())
-                            elif or_url.strip():
-                                saved_path = or_url.strip()
-
-                            conn = get_conn()
-                            conn.execute("""
-                                INSERT INTO catalog (
-                                    title, code, img_path, box_type, material,
-                                    finish, printing, length, width, height, clicks
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                            """, (new_title, new_code or "PX-Custom", saved_path, g_box, g_mat, g_fin, g_prt, g_l, g_w, g_h))
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ নতুন বক্স গ্যালারিতে যুক্ত হয়েছে!")
-                            st.rerun()
-
-            with col_edit:
-                st.markdown("#### 🖼️ বর্তমান প্রোডাক্টের ছবি পরিবর্তন বা ডিলিট")
-                if not catalog_df.empty:
-                    bmap = {f"{r['id']} - {r['title']}": r["id"] for _, r in catalog_df.iterrows()}
-                    sel_lbl = st.selectbox("প্রোডাক্ট সিলেক্ট করুন:", list(bmap.keys()))
-                    sel_id = bmap[sel_lbl]
-                    srow = catalog_df[catalog_df["id"] == sel_id].iloc[0]
-
-                    st.markdown(
-                        f'<div class="cat-card" style="max-width:260px;">'
-                        f'<div class="cat-img-box"><img src="{render_img_src(srow["img_path"])}"></div>'
-                        f'<div class="cat-info"><p class="cat-title">{srow["title"]}</p><p class="cat-sub">{srow["code"]}</p></div>'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    rep_photo = st.file_uploader("নতুন ছবি আপলোড করুন:", type=["jpg", "jpeg", "png", "webp"], key="rep_up")
-                    if st.button("📸 ছবিটি আপডেট করুন"):
-                        if rep_photo is not None:
-                            ext = os.path.splitext(rep_photo.name)[1]
-                            fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-                            fpath = os.path.join("product_images", fname)
-                            with open(fpath, "wb") as f:
-                                f.write(rep_photo.getbuffer())
-                            conn = get_conn()
-                            conn.execute("UPDATE catalog SET img_path=? WHERE id=?", (fpath, sel_id))
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ ছবি পরিবর্তন হয়েছে!")
-                            st.rerun()
-
-                    if st.button("🗑️ এই প্রোডাক্টটি ডিলিট করুন"):
-                        conn = get_conn()
-                        conn.execute("DELETE FROM catalog WHERE id=?", (sel_id,))
-                        conn.commit()
-                        conn.close()
-                        st.success("প্রোডাক্ট ডিলিট হয়েছে!")
-                        st.rerun()
-
-        # ----------------------------------------------------
-        # ৬. ক্যাটাগরি ও রেট (CATEGORIES & CUSTOM REQUIREMENTS)
-        # ----------------------------------------------------
-        elif admin_page == "🏷️ ক্যাটাগরি ও রেট (Categories)":
-            st.markdown("### 🏷️ ক্যাটাগরি, ম্যাটেরিয়াল ও কাস্টমার রিকোয়ারমেন্ট বিল্ডার")
-            rc1, rc2 = st.columns([1, 1.2], gap="large")
-            with rc1:
-                with st.form("cat_form"):
-                    cat_ch = st.selectbox("ক্যাটাগরি সিলেক্ট করুন", [
-                        "material (বোর্ড ও জিএসএম)",
-                        "box_type (বক্সের ধরন)",
-                        "finish (লেমিনেশন ও ফিনিশিং)",
-                        "printing (প্রিন্টিং ও প্লেট)"
-                    ])
-                    ckey = cat_ch.split(" ")[0]
-                    oname = st.text_input("নতুন অপশনের নাম *", placeholder="যেমন: 400 GSM Swedish Board")
-                    orate = st.number_input("রেট / চার্জ (BDT)", min_value=0.0, value=0.05, step=0.005, format="%.3f")
-                    if st.form_submit_button("➕ ক্যাটাগরিতে যোগ করুন"):
-                        if oname.strip():
-                            conn = get_conn()
-                            conn.execute(
-                                "INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)",
-                                (ckey, oname.strip(), orate)
-                            )
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ নতুন রিকোয়ারমেন্ট অপশন যুক্ত হয়েছে!")
-                            st.rerun()
-            with rc2:
-                conn = get_conn()
-                odf = pd.read_sql_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category", conn)
-                conn.close()
-                st.dataframe(odf, use_container_width=True)
-
-        # ----------------------------------------------------
-        # ৭. ট্রাফিক (WEBSITE TRAFFIC ANALYTICS)
-        # ----------------------------------------------------
-        elif admin_page == "📊 ট্রাফিক (Traffic)":
-            st.markdown("### 📊 ওয়েবসাইট ভিজিটর ও ট্রাফিক অ্যানালিটিক্স")
-            tc1, tc2, tc3 = st.columns(3)
-            tc1.metric("আজকের ভিজিটর", to_bn_num(today_vis))
-            tc2.metric("মোট পেজ ভিউ", to_bn_num(page_vw))
-            tc3.metric("এখন সাইটে লাইভ", to_bn_num(live_usr))
-
-            with st.form("traffic_update"):
-                st.markdown("#### ⚙️ ট্রাফিক কাউন্টার আপডেট / সিমুলেশন")
-                u_vis = st.number_input("আজকের ভিজিটর সংখ্যা", value=int(today_vis))
-                u_pvw = st.number_input("পেজ ভিউ সংখ্যা", value=int(page_vw))
-                u_liv = st.number_input("এখন লাইভ ইউজার", value=int(live_usr))
-                if st.form_submit_button("🔄 ট্রাফিক ডাটা সেভ করুন"):
-                    set_stat("today_visitors", u_vis)
-                    set_stat("page_views", u_pvw)
-                    set_stat("live_now", u_liv)
-                    st.success("✅ ট্রাফিক ডাটা আপডেট হয়েছে!")
-                    st.rerun()
-
-        # ----------------------------------------------------
-        # ৮. প্রোডাক্টের আগ্রহ (PRODUCT INTEREST & CLICKS)
-        # ----------------------------------------------------
-        elif admin_page == "✨ প্রোডাক্টের আগ্রহ (Interest)":
-            st.markdown("### ✨ প্রোডাক্টের আগ্রহ (অর্ডার ক্লিক বনাম অর্ডার)")
-            st.info(f"মোট কাস্টমাইজ/অর্ডার বাটন ক্লিক: **{to_bn_num(ord_clicks)} বার** | খাতায় তোলা কনফার্ম অর্ডার: **{to_bn_num(order_count)} টি**")
-            st.dataframe(
-                catalog_df[["id", "title", "code", "material", "clicks"]].sort_values(by="clicks", ascending=False),
-                use_container_width=True
+        r2_c1, r2_c2, r2_c3 = st.columns(3, gap="medium")
+        with r2_c1:
+            st.markdown(
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ আজকের ভিজিটর ]</span><span class="ov-link">ট্রাফিক →</span></div>'
+                f'<div style="display:flex; gap:45px; align-items:center;">'
+                f'<div><div class="ov-sub">আজ ভিজিটর</div><div class="ov-big">{to_bn_num(today_vis)}</div></div>'
+                f'<div><div class="ov-sub">এখন সাইটে</div><div class="ov-big">{to_bn_num(live_usr)}</div></div>'
+                f'</div>'
+                f'<div class="ov-foot">পেজ ভিউ: {to_bn_num(page_vw)} &nbsp;|&nbsp; গত ৫ মিনিটে অ্যাক্টিভ</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with r2_c2:
+            st.markdown(
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ অর্ডার ক্লিক বনাম অর্ডার ]</span><span class="ov-link">আগ্রহ →</span></div>'
+                f'<div style="display:flex; gap:45px; align-items:center;">'
+                f'<div><div class="ov-sub">মেসেঞ্জার/কল/ক্লিক</div><div class="ov-big">{to_bn_num(ord_clicks)}</div></div>'
+                f'<div><div class="ov-sub">খাতায় তোলা অর্ডার</div><div class="ov-big">{to_bn_num(order_count)}</div></div>'
+                f'</div>'
+                f'<div class="ov-foot">সাইটের কাস্টমাইজ বা কল বাটনে যতবার ট্যাপ হয়েছে, আর পাশে যত অর্ডার খাতায় তোলা হয়েছে।</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with r2_c3:
+            st.markdown(
+                f'<div class="ov-card">'
+                f'<div class="ov-header"><span>[ এই মাসের সেরা প্রোডাক্ট ]</span><span class="ov-link">আগ্রহ →</span></div>'
+                f'<div style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin-bottom:10px;">{best_prod_name}</div>'
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<div><div class="ov-sub">বিক্রি (পিস)</div><div class="ov-big" style="font-size:1.85rem;">{to_bn_num(f"{best_prod_qty:,}")}</div></div>'
+                f'<div><div class="ov-sub">বিক্রির টাকা</div><div class="ov-big" style="font-size:1.85rem;">৳{to_bn_num(f"{best_prod_rev:,.0f}")}</div></div>'
+                f'</div></div>',
+                unsafe_allow_html=True
             )
 
-        # ----------------------------------------------------
-        # ৯. সার্চ (GLOBAL SEARCH ENGINE)
-        # ----------------------------------------------------
-        elif admin_page == "🔍 সার্চ (Search)":
-            st.markdown("### 🔍 অর্ডার, কাস্টমার বা প্রোডাক্ট সার্চ করুন")
-            sq = st.text_input("অর্ডার আইডি, কাস্টমারের নাম, ফোন নম্বর বা বক্সের নাম লিখুন:")
-            if sq.strip():
-                res_ord = orders_df[
-                    orders_df["customer_name"].str.contains(sq, case=False, na=False) |
-                    orders_df["phone"].str.contains(sq, case=False, na=False) |
-                    orders_df["order_id"].str.contains(sq, case=False, na=False)
-                ]
-                st.markdown("#### 📋 অর্ডার সার্চ রেজাল্ট:")
-                st.dataframe(res_ord, use_container_width=True)
+    elif admin_page == "📑 অর্ডার (Orders)":
+        st.markdown("### 📑 অর্ডার এবং খোলা কোটেশন ম্যানেজমেন্ট")
+        if orders_df.empty:
+            st.info("এখনো কোনো অর্ডার নেই।")
+        else:
+            st.dataframe(orders_df, use_container_width=True)
+            csv_data = orders_df.to_csv(index=False).encode("utf-8")
+            st.download_button("📥 এক্সেল / CSV ডাউনলোড করুন", data=csv_data, file_name="packxebec_orders.csv", mime="text/csv")
 
-        # ----------------------------------------------------
-        # ১০. এসইও (SEO & META CONFIGURATOR)
-        # ----------------------------------------------------
-        elif admin_page == "🌐 এসইও (SEO)":
-            st.markdown("### 🌐 ওয়েবসাইট এসইও (Google SEO & Meta Tags)")
-            with st.form("seo_form"):
-                s_title = st.text_input("SEO Website Title", value=get_stat("seo_title"))
-                s_keys = st.text_input("Target Keywords (কমা দিয়ে লিখুন)", value=get_stat("seo_keywords"))
-                s_desc = st.text_area("Meta Description", value=get_stat("seo_desc"))
-                if st.form_submit_button("🚀 SEO সেটিংস সেভ করুন"):
-                    set_stat("seo_title", s_title)
-                    set_stat("seo_keywords", s_keys)
-                    set_stat("seo_desc", s_desc)
-                    st.success("✅ এসইও কনফিগারেশন সেভ হয়েছে!")
+            st.markdown("---")
+            st.markdown("#### ⚙️ অর্ডার স্ট্যাটাস পরিবর্তন করুন")
+            c1, c2, c3 = st.columns(3)
+            sel_ord = c1.selectbox("Order ID সিলেক্ট করুন", orders_df["order_id"].tolist())
+            new_st = c2.selectbox("নতুন স্ট্যাটাস", [
+                "Pending", "Quotation", "In Printing",
+                "Glossy/Matte Lamination", "Die-Cutting", "Ready", "Delivered"
+            ])
+            c3.write("")
+            c3.write("")
+            if c3.button("🔄 স্ট্যাটাস আপডেট করুন"):
+                conn = get_conn()
+                conn.execute("UPDATE orders SET status=? WHERE order_id=?", (new_st, sel_ord))
+                conn.commit()
+                conn.close()
+                st.success("✅ স্ট্যাটাস আপডেট হয়েছে!")
+                st.rerun()
 
-        # ----------------------------------------------------
-        # ১১. সেটিংস (SYSTEM SETTINGS)
-        # ----------------------------------------------------
-        elif admin_page == "⚙️ সেটিংস (Settings)":
-            st.markdown("### ⚙️ ফ্যাক্টরি ও সিস্টেম সেটিংস")
-            with st.form("sys_settings"):
-                f_phn = st.text_input("ফ্যাক্টরি হটলাইন / হোয়াটসঅ্যাপ নম্বর", value=get_stat("factory_phone"))
-                ord_clk = st.number_input("মেসেঞ্জার/কল ট্যাপ কাউন্টার", value=int(ord_clicks))
-                if st.form_submit_button("💾 সেটিংস সেভ করুন"):
-                    set_stat("factory_phone", f_phn)
-                    set_stat("order_clicks", ord_clk)
-                    st.success("✅ সেটিংস আপডেট হয়েছে!")
+    elif admin_page == "👥 কাস্টমার (Customers)":
+        st.markdown("### 👥 কাস্টমার তালিকা ও লেনদেন সামারি")
+        if orders_df.empty:
+            st.info("কোনো কাস্টমার ডাটা নেই।")
+        else:
+            cust_summary = orders_df.groupby(["customer_name", "phone"]).agg(
+                মোট_অর্ডার=("order_id", "count"),
+                মোট_বিল=("total_price", "sum"),
+                মোট_জমা=("paid_amount", "sum"),
+                মোট_বাকি=("due_amount", "sum")
+            ).reset_index()
+            st.dataframe(cust_summary, use_container_width=True)
+
+    elif admin_page == "💳 হিসাব (Accounts & Due)":
+        st.markdown("### 💳 হিসাব খাতা (মোট বাকি ও আদায় ম্যানেজার)")
+        k1, k2, k3 = st.columns(3)
+        k1.metric("মোট বিক্রি (Total Billed)", f"৳ {total_sales:,.0f}")
+        k2.metric("এই মাসে আদায় (Collected)", f"৳ {total_collected:,.0f}")
+        k3.metric("মোট বাকি (Total Due)", f"৳ {total_due:,.0f}")
+
+        st.markdown("---")
+        st.markdown("#### 💰 কাস্টমারের বকেয়া টাকা জমা নিন (Update Payment)")
+        if not orders_df.empty:
+            p_c1, p_c2, p_c3 = st.columns(3)
+            pay_ord = p_c1.selectbox("Order ID সিলেক্ট করুন", orders_df["order_id"].tolist())
+            cur_row = orders_df[orders_df["order_id"] == pay_ord].iloc[0]
+            p_c2.info(f"কাস্টমার: **{cur_row['customer_name']}** | মোট বিল: ৳{cur_row['total_price']} | বর্তমান বাকি: **৳{cur_row['due_amount']}**")
+            new_pay = p_c3.number_input("নতুন জমা টাকা (BDT)", min_value=0.0, value=float(cur_row["paid_amount"]), step=500.0)
+            if st.button("✅ পেমেন্ট আপডেট করুন"):
+                new_due = max(0.0, float(cur_row["total_price"]) - new_pay)
+                conn = get_conn()
+                conn.execute(
+                    "UPDATE orders SET paid_amount=?, due_amount=? WHERE order_id=?",
+                    (new_pay, new_due, pay_ord)
+                )
+                conn.commit()
+                conn.close()
+                st.success("🎉 পেমেন্ট ও বাকি হিসাব আপডেট হয়েছে!")
+                st.rerun()
+
+    elif admin_page == "📦 প্রোডাক্ট ও ছবি (Products CMS)":
+        st.markdown("### 📦 প্রোডাক্ট গ্যালারি ও ছবি আপলোডার (Add/Edit Box Photos)")
+        col_add, col_edit = st.columns([1.1, 1], gap="large")
+
+        with col_add:
+            st.markdown("#### ➕ নতুন বক্স ও ছবি যোগ করুন")
+            with st.form("cms_add_box"):
+                new_title = st.text_input("বক্সের নাম *", placeholder="যেমন: 300 GSM Swedish Perfume Box")
+                new_code = st.text_input("কোড ও সাবটাইটেল *", placeholder="PX-109 • Swedish Board")
+                up_file = st.file_uploader("ছবি আপলোড করুন (.jpg, .png, .webp)", type=["jpg", "jpeg", "png", "webp"])
+                or_url = st.text_input("অথবা ছবির অনলাইন লিংক দিন:", placeholder="https://...")
+
+                gc1, gc2 = st.columns(2)
+                g_box = gc1.selectbox("বক্সের ধরন", box_options)
+                g_mat = gc2.selectbox("ম্যাটেরিয়াল", mat_options)
+                gc3, gc4 = st.columns(2)
+                g_fin = gc3.selectbox("ফিনিশিং", finish_options)
+                g_prt = gc4.selectbox("প্রিন্টিং", print_options)
+
+                d1, d2, d3 = st.columns(3)
+                g_l = d1.number_input("দৈর্ঘ্য (L)", value=6.0, step=0.5)
+                g_w = d2.number_input("প্রস্থ (W)", value=4.0, step=0.5)
+                g_h = d3.number_input("উচ্চতা (H)", value=3.0, step=0.5)
+
+                if st.form_submit_button("✨ প্রোডাক্ট গ্যালারিতে সেভ করুন"):
+                    if not new_title.strip():
+                        st.error("বক্সের নাম দিন।")
+                    else:
+                        saved_path = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600"
+                        if up_file is not None:
+                            ext = os.path.splitext(up_file.name)[1]
+                            fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+                            saved_path = os.path.join("product_images", fname)
+                            with open(saved_path, "wb") as f:
+                                f.write(up_file.getbuffer())
+                        elif or_url.strip():
+                            saved_path = or_url.strip()
+
+                        conn = get_conn()
+                        conn.execute("""
+                            INSERT INTO catalog (
+                                title, code, img_path, box_type, material,
+                                finish, printing, length, width, height, clicks
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                        """, (new_title, new_code or "PX-Custom", saved_path, g_box, g_mat, g_fin, g_prt, g_l, g_w, g_h))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ নতুন বক্স গ্যালারিতে যুক্ত হয়েছে!")
+                        st.rerun()
+
+        with col_edit:
+            st.markdown("#### 🖼️ বর্তমান প্রোডাক্টের ছবি পরিবর্তন বা ডিলিট")
+            if not catalog_df.empty:
+                bmap = {f"{r['id']} - {r['title']}": r["id"] for _, r in catalog_df.iterrows()}
+                sel_lbl = st.selectbox("প্রোডাক্ট সিলেক্ট করুন:", list(bmap.keys()))
+                sel_id = bmap[sel_lbl]
+                srow = catalog_df[catalog_df["id"] == sel_id].iloc[0]
+
+                st.markdown(
+                    f'<div class="cat-card" style="max-width:260px;">'
+                    f'<div class="cat-img-box"><img src="{render_img_src(srow["img_path"])}"></div>'
+                    f'<div class="cat-info"><p class="cat-title">{srow["title"]}</p><p class="cat-sub">{srow["code"]}</p></div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+                rep_photo = st.file_uploader("নতুন ছবি আপলোড করুন:", type=["jpg", "jpeg", "png", "webp"], key="rep_up")
+                if st.button("📸 ছবিটি আপডেট করুন"):
+                    if rep_photo is not None:
+                        ext = os.path.splitext(rep_photo.name)[1]
+                        fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+                        fpath = os.path.join("product_images", fname)
+                        with open(fpath, "wb") as f:
+                            f.write(rep_photo.getbuffer())
+                        conn = get_conn()
+                        conn.execute("UPDATE catalog SET img_path=? WHERE id=?", (fpath, sel_id))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ ছবি পরিবর্তন হয়েছে!")
+                        st.rerun()
+
+                if st.button("🗑️ এই প্রোডাক্টটি ডিলিট করুন"):
+                    conn = get_conn()
+                    conn.execute("DELETE FROM catalog WHERE id=?", (sel_id,))
+                    conn.commit()
+                    conn.close()
+                    st.success("প্রোডাক্ট ডিলিট হয়েছে!")
+                    st.rerun()
+
+    elif admin_page == "🏷️ ক্যাটাগরি ও রেট (Categories)":
+        st.markdown("### 🏷️ ক্যাটাগরি, ম্যাটেরিয়াল ও কাস্টমার রিকোয়ারমেন্ট বিল্ডার")
+        rc1, rc2 = st.columns([1, 1.2], gap="large")
+        with rc1:
+            with st.form("cat_form"):
+                cat_ch = st.selectbox("ক্যাটাগরি সিলেক্ট করুন", [
+                    "material (বোর্ড ও জিএসএম)",
+                    "box_type (বক্সের ধরন)",
+                    "finish (লেমিনেশন ও ফিনিশিং)",
+                    "printing (প্রিন্টিং ও প্লেট)"
+                ])
+                ckey = cat_ch.split(" ")[0]
+                oname = st.text_input("নতুন অপশনের নাম *", placeholder="যেমন: 400 GSM Swedish Board")
+                orate = st.number_input("রেট / চার্জ (BDT)", min_value=0.0, value=0.05, step=0.005, format="%.3f")
+                if st.form_submit_button("➕ ক্যাটাগরিতে যোগ করুন"):
+                    if oname.strip():
+                        conn = get_conn()
+                        conn.execute(
+                            "INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)",
+                            (ckey, oname.strip(), orate)
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ নতুন রিকোয়ারমেন্ট অপশন যুক্ত হয়েছে!")
+                        st.rerun()
+        with rc2:
+            conn = get_conn()
+            odf = pd.read_sql_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category", conn)
+            conn.close()
+            st.dataframe(odf, use_container_width=True)
+
+    elif admin_page == "📊 ট্রাফিক (Traffic)":
+        st.markdown("### 📊 ওয়েবসাইট ভিজিটর ও ট্রাফিক অ্যানালিটিক্স")
+        tc1, tc2, tc3 = st.columns(3)
+        tc1.metric("আজকের ভিজিটর", to_bn_num(today_vis))
+        tc2.metric("মোট পেজ ভিউ", to_bn_num(page_vw))
+        tc3.metric("এখন সাইটে লাইভ", to_bn_num(live_usr))
+
+        with st.form("traffic_update"):
+            st.markdown("#### ⚙️ ট্রাফিক কাউন্টার আপডেট / সিমুলেশন")
+            u_vis = st.number_input("আজকের ভিজিটর সংখ্যা", value=int(today_vis))
+            u_pvw = st.number_input("পেজ ভিউ সংখ্যা", value=int(page_vw))
+            u_liv = st.number_input("এখন লাইভ ইউজার", value=int(live_usr))
+            if st.form_submit_button("🔄 ট্রাফিক ডাটা সেভ করুন"):
+                set_stat("today_visitors", u_vis)
+                set_stat("page_views", u_pvw)
+                set_stat("live_now", u_liv)
+                st.success("✅ ট্রাফিক ডাটা আপডেট হয়েছে!")
+                st.rerun()
+
+    elif admin_page == "✨ প্রোডাক্টের আগ্রহ (Interest)":
+        st.markdown("### ✨ প্রোডাক্টের আগ্রহ (অর্ডার ক্লিক বনাম অর্ডার)")
+        st.info(f"মোট কাস্টমাইজ/অর্ডার বাটন ক্লিক: **{to_bn_num(ord_clicks)} বার** | খাতায় তোলা কনফার্ম অর্ডার: **{to_bn_num(order_count)} টি**")
+        st.dataframe(
+            catalog_df[["id", "title", "code", "material", "clicks"]].sort_values(by="clicks", ascending=False),
+            use_container_width=True
+        )
+
+    elif admin_page == "🔍 সার্চ (Search)":
+        st.markdown("### 🔍 অর্ডার, কাস্টমার বা প্রোডাক্ট সার্চ করুন")
+        sq = st.text_input("অর্ডার আইডি, কাস্টমারের নাম, ফোন নম্বর বা বক্সের নাম লিখুন:")
+        if sq.strip():
+            res_ord = orders_df[
+                orders_df["customer_name"].str.contains(sq, case=False, na=False) |
+                orders_df["phone"].str.contains(sq, case=False, na=False) |
+                orders_df["order_id"].str.contains(sq, case=False, na=False)
+            ]
+            st.markdown("#### 📋 অর্ডার সার্চ রেজাল্ট:")
+            st.dataframe(res_ord, use_container_width=True)
+
+    elif admin_page == "🌐 এসইও (SEO)":
+        st.markdown("### 🌐 ওয়েবসাইট এসইও (Google SEO & Meta Tags)")
+        with st.form("seo_form"):
+            s_title = st.text_input("SEO Website Title", value=get_stat("seo_title"))
+            s_keys = st.text_input("Target Keywords (কমা দিয়ে লিখুন)", value=get_stat("seo_keywords"))
+            s_desc = st.text_area("Meta Description", value=get_stat("seo_desc"))
+            if st.form_submit_button("🚀 SEO সেটিংস সেভ করুন"):
+                set_stat("seo_title", s_title)
+                set_stat("seo_keywords", s_keys)
+                set_stat("seo_desc", s_desc)
+                st.success("✅ এসইও কনফিগারেশন সেভ হয়েছে!")
+
+    elif admin_page == "⚙️ সেটিংস (Settings)":
+        st.markdown("### ⚙️ ফ্যাক্টরি ও সিস্টেম সেটিংস")
+        with st.form("sys_settings"):
+            f_phn = st.text_input("ফ্যাক্টরি হটলাইন / হোয়াটসঅ্যাপ নম্বর", value=get_stat("factory_phone"))
+            ord_clk = st.number_input("মেসেঞ্জার/কল ট্যাপ কাউন্টার", value=int(ord_clicks))
+            if st.form_submit_button("💾 সেটিংস সেভ করুন"):
+                set_stat("factory_phone", f_phn)
+                set_stat("order_clicks", ord_clk)
+                st.success("✅ সেটিংস আপডেট হয়েছে!")
