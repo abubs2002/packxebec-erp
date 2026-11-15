@@ -115,7 +115,8 @@ def init_db():
         ("seo_keywords", "300 GSM Swedish Board, Custom Box Dhaka, Packaging Printing"),
         ("seo_desc", "Order custom printed packaging boxes with instant quotation."),
         ("factory_phone", "01XXXXXXXXX"),
-        ("enable_customer_login", "1")
+        ("enable_customer_login", "1"),
+        ("admin_password", "admin123")
     ]
     c.executemany(
         "INSERT OR IGNORE INTO site_stats VALUES (?, ?)",
@@ -594,7 +595,7 @@ finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
 # ==========================================================
-# ৪. BIG CENTER BRAND LOGO HEADER (ক্লিন ব্যানার - নোট ছাড়া)
+# ৪. BIG CENTER BRAND LOGO HEADER
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
@@ -610,10 +611,9 @@ st.markdown(
 )
 
 # ==========================================================
-# PART A: CUSTOMER STUDIO (শুধুমাত্র যখন অ্যাডমিন মোড অফ থাকে)
+# PART A: CUSTOMER STUDIO
 # ==========================================================
 if not st.session_state.admin_logged_in:
-    # অ্যাডমিন সেটিংস থেকে কাস্টমার লগইন অপশন চালু থাকলে তবেই দেখাবে (এবং কোনো বাড়তি নোট বক্স ছাড়া)
     if get_stat("enable_customer_login", "1") == "1":
         if st.session_state.cust_user:
             u = st.session_state.cust_user
@@ -867,7 +867,7 @@ if not st.session_state.admin_logged_in:
         )
 
 # ==========================================================
-# PART B: ADMIN BACKEND (এখানে কাস্টমার লগইন বক্স সম্পূর্ণ বন্ধ)
+# PART B: ADMIN BACKEND
 # ==========================================================
 else:
     top_adm1, top_adm2 = st.columns([3, 1])
@@ -891,7 +891,7 @@ else:
             "✨ প্রোডাক্টের আগ্রহ (Interest)",
             "🔍 সার্চ (Search)",
             "🌐 এসইও (SEO)",
-            "⚙️ সেটিংস (Settings)"
+            "⚙️ সেটিংস ও পাসওয়ার্ড পরিবর্তন (Settings & Security)"
         ]
     )
     st.markdown("<hr style='margin:14px 0; border-color:rgba(255,255,255,0.12);'>", unsafe_allow_html=True)
@@ -1160,21 +1160,44 @@ else:
                 st.success("✅ এসইও কনফিগারেশন সেভ হয়েছে!")
 
     elif "সেটিংস" in admin_page:
-        st.markdown("### ⚙️ সিস্টেম ও কাস্টমার লগইন কন্ট্রোল")
-        with st.form("sys_settings"):
-            cur_login_state = get_stat("enable_customer_login", "1") == "1"
-            toggle_login = st.checkbox("কাস্টমার পেজে 'মেম্বার লগইন' অপশন চালু রাখুন (চেক তুলে দিলে লগইন বক্স সম্পূর্ণ বন্ধ হয়ে যাবে)", value=cur_login_state)
-            f_phn = st.text_input("ফ্যাক্টরি হটলাইন নম্বর", value=get_stat("factory_phone"))
-            ord_clk = st.number_input("মেসেঞ্জার/কল ট্যাপ কাউন্টার", value=int(ord_clicks))
-            if st.form_submit_button("💾 সেটিংস সেভ করুন"):
-                set_stat("enable_customer_login", "1" if toggle_login else "0")
-                set_stat("factory_phone", f_phn)
-                set_stat("order_clicks", ord_clk)
-                st.success("✅ সেটিংস সফলভাবে আপডেট হয়েছে!")
-                st.rerun()
+        st.markdown("### ⚙️ সিস্টেম সেটিংস ও অ্যাডমিন পাসওয়ার্ড পরিবর্তন")
+        set_col1, set_col2 = st.columns(2, gap="large")
+
+        with set_col1:
+            st.markdown("#### 🛠️ জেনারেল ও কাস্টমার লগইন সেটিংস")
+            with st.form("sys_settings"):
+                cur_login_state = get_stat("enable_customer_login", "1") == "1"
+                toggle_login = st.checkbox("কাস্টমার পেজে 'মেম্বার লগইন' অপশন চালু রাখুন", value=cur_login_state)
+                f_phn = st.text_input("ফ্যাক্টরি হটলাইন নম্বর", value=get_stat("factory_phone"))
+                ord_clk = st.number_input("মেসেঞ্জার/কল ট্যাপ কাউন্টার", value=int(ord_clicks))
+                if st.form_submit_button("💾 জেনারেল সেটিংস সেভ করুন"):
+                    set_stat("enable_customer_login", "1" if toggle_login else "0")
+                    set_stat("factory_phone", f_phn)
+                    set_stat("order_clicks", ord_clk)
+                    st.success("✅ সেটিংস সফলভাবে আপডেট হয়েছে!")
+                    st.rerun()
+
+        with set_col2:
+            st.markdown("#### 🔐 অ্যাডমিন পাসওয়ার্ড পরিবর্তন করুন (Security)")
+            with st.form("change_admin_pw_form"):
+                cur_pw_input = st.text_input("বর্তমান পাসওয়ার্ড দিন *", type="password")
+                new_pw_input = st.text_input("নতুন পাসওয়ার্ড দিন *", type="password")
+                conf_pw_input = st.text_input("নতুন পাসওয়ার্ড পুনরায় দিন *", type="password")
+
+                if st.form_submit_button("🔑 পাসওয়ার্ড আপডেট করুন"):
+                    saved_adm_pw = get_stat("admin_password", "admin123")
+                    if cur_pw_input != saved_adm_pw:
+                        st.error("❌ বর্তমান পাসওয়ার্ডটি সঠিক নয়!")
+                    elif len(new_pw_input.strip()) < 4:
+                        st.warning("⚠️ নতুন পাসওয়ার্ড অন্তত ৪ অক্ষরের হতে হবে।")
+                    elif new_pw_input != conf_pw_input:
+                        st.error("❌ নতুন পাসওয়ার্ড দুটি মেলেনি!")
+                    else:
+                        set_stat("admin_password", new_pw_input.strip())
+                        st.success("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে! এখন থেকে নতুন পাসওয়ার্ড দিয়ে লগইন করবেন।")
 
 # ==========================================================
-# ৬. DISCREET FOOTER STAFF LOGIN
+# ৬. DISCREET FOOTER STAFF LOGIN (ডাটাবেস পাসওয়ার্ড ভেরিফিকেশনসহ)
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 15px 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
 f_col1, f_col2 = st.columns([3, 1])
@@ -1185,8 +1208,9 @@ with f_col2:
         with st.expander("🔐 Staff ERP Portal"):
             adm_pw = st.text_input("Admin Password", type="password", key="footer_adm_pw")
             if st.button("Login to Backend"):
-                if adm_pw == "admin123":
+                real_adm_pw = get_stat("admin_password", "admin123")
+                if adm_pw == real_adm_pw:
                     st.session_state.admin_logged_in = True
                     st.rerun()
                 else:
-                    st.error("ভুল পাসওয়ার্ড!")
+                    st.error("❌ ভুল পাসওয়ার্ড!")
