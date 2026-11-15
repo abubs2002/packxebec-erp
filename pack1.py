@@ -208,17 +208,17 @@ def init_db():
         demo_orders = [
             ("PX-1101", "2026-11-10 11:20", "Aarong Artisan", "01711000001",
              "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)", "300 GSM Swedish Board (Best Seller)",
-             "12x9x4", "Glossy Lamination (গ্লসি ফিনিশ)", "4 Color (CMYK Full Print)",
+             "12.0x9.0x4.0", "Glossy Lamination (গ্লসি ফিনিশ)", "4 Color (CMYK Full Print)",
              6000, 12.5, 75000.0, 3500.0, 60000.0, 15000.0, 54000.0, 21000.0,
              "aarong_box_die.pdf", "Urgent Glossy Batch", "Delivered"),
             ("PX-1102", "2026-11-12 15:40", "Glow Cosmetics BD", "01819000002",
              "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", "350 GSM Art Card",
-             "7x5x2.5", "Matte Lamination (ম্যাট ফিনিশ)", "4 Color (CMYK Full Print)",
+             "7.0x5.0x2.5", "Matte Lamination (ম্যাট ফিনিশ)", "4 Color (CMYK Full Print)",
              2000, 16.2, 32400.0, 0.0, 19700.0, 12700.0, 23500.0, 8900.0,
              "glow_logo_ai.png", "Logo on top flap", "In Printing"),
             ("PX-1103", "2026-11-14 18:10", "BakeHouse Dhaka", "01912000003",
              "Food / Sweet Packaging Box", "300 GSM Swedish Board (Best Seller)",
-             "8x8x3", "Glossy Lamination (গ্লসি ফিনিশ)", "Single Color Brand Print",
+             "8.0x8.0x3.0", "Glossy Lamination (গ্লসি ফিনিশ)", "Single Color Brand Print",
              500, 14.0, 7000.0, 0.0, 0.0, 7000.0, 5100.0, 1900.0,
              "No File", "Asked for price quote", "Quotation")
         ]
@@ -282,6 +282,8 @@ def check_returning_customer(phone_str):
         (p,)
     )
     ord_row = c.fetchone()
+    c.execute("SELECT DISTINCT dimensions FROM orders WHERE phone=?", (p,))
+    prev_dims = [r[0] for r in c.fetchall() if r[0]]
     conn.close()
 
     ord_cnt = ord_row[0] if ord_row and ord_row[0] else 0
@@ -293,7 +295,8 @@ def check_returning_customer(phone_str):
             "order_count": max(ord_cnt, cust_row[1] if cust_row else 0),
             "total_billed": ord_row[1] or 0.0,
             "total_paid": ord_row[2] or 0.0,
-            "total_due": ord_row[3] or 0.0
+            "total_due": ord_row[3] or 0.0,
+            "prev_dims": prev_dims
         }
     return None
 
@@ -625,7 +628,7 @@ if not st.session_state.admin_logged_in:
                     f'<h4 style="margin:6px 0 2px 0;">স্বাগতম, {u["name"]} ({u["phone"]})</h4>'
                     f'<div style="font-size:0.84rem; color:#cbd5e1;">'
                     f'পূর্ববর্তী অর্ডার: <b>{u["order_count"]} টি</b> | '
-                    f'মোট বিল: <b>৳{u["total_billed"]:,.0f}</b> | '
+                    f'সংরক্ষিত ডাই সাইজ: <b>{", ".join(u.get("prev_dims", [])) or "N/A"}</b> | '
                     f'বর্তমান বাকি: <b style="color:#f472b6;">৳{u["total_due"]:,.0f}</b>'
                     f'</div></div>',
                     unsafe_allow_html=True
@@ -646,8 +649,12 @@ if not st.session_state.admin_logged_in:
                 if not my_ords.empty:
                     st.dataframe(my_ords, use_container_width=True)
         else:
-            with st.expander("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন", expanded=False):
-                auth_tab1, auth_tab2 = st.tabs(["🔑 মেম্বার লগইন", "➕ নতুন অ্যাকাউন্ট"])
+            with st.expander("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন / পাসওয়ার্ড রিসেট", expanded=False):
+                auth_tab1, auth_tab2, auth_tab3 = st.tabs([
+                    "🔑 মেম্বার লগইন",
+                    "➕ নতুন অ্যাকাউন্ট",
+                    "🔄 পাসওয়ার্ড ভুলে গেছেন?"
+                ])
                 with auth_tab1:
                     l_c1, l_c2 = st.columns(2)
                     l_phone = l_c1.text_input("মোবাইল নম্বর", placeholder="01XXXXXXXXX", key="lp")
@@ -662,11 +669,11 @@ if not st.session_state.admin_logged_in:
                         if r or rec:
                             st.session_state.cust_user = rec if rec else {
                                 "name": r[0], "phone": l_phone.strip(),
-                                "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0
+                                "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0, "prev_dims": []
                             }
                             st.rerun()
                         else:
-                            st.error("❌ এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।")
+                            st.error("❌ মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।")
 
                 with auth_tab2:
                     r_c1, r_c2, r_c3 = st.columns(3)
@@ -686,6 +693,26 @@ if not st.session_state.admin_logged_in:
                             st.rerun()
                         else:
                             st.warning("সবগুলো ঘর পূরণ করুন।")
+
+                with auth_tab3:
+                    fp_c1, fp_c2 = st.columns(2)
+                    fp_phone = fp_c1.text_input("আপনার রেজিস্টার্ড মোবাইল নম্বর", key="fpp")
+                    fp_new_pass = fp_c2.text_input("নতুন পাসওয়ার্ড সেট করুন", type="password", key="fpnp")
+                    if st.button("🔄 পাসওয়ার্ড রিসেট করুন", key="fpbtn"):
+                        if fp_phone.strip() and len(fp_new_pass.strip()) >= 3:
+                            conn = get_conn()
+                            c = conn.cursor()
+                            c.execute("SELECT name FROM customers WHERE phone=?", (fp_phone.strip(),))
+                            row = c.fetchone()
+                            if row:
+                                conn.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
+                                conn.commit()
+                                st.success("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।")
+                            else:
+                                st.error("❌ এই মোবাইল নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।")
+                            conn.close()
+                        else:
+                            st.warning("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।")
 
     st.markdown("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)")
     catalog_df = get_catalog_df()
@@ -748,7 +775,7 @@ if not st.session_state.admin_logged_in:
             printing = f_col2.selectbox("প্রিন্টিং মোড", print_options, index=p_idx)
             quantity = st.slider("📦 অর্ডারের পরিমাণ (Quantity - Pcs)", min_value=100, max_value=20000, value=500, step=100)
 
-        st.markdown("#### 📝 ৩. কাস্টমার তথ্য ও ডিজাইন ফাইল আপলোড")
+        st.markdown("#### 📝 ৩. কাস্টমার তথ্য, ডিজাইন পরিবর্তন ও ফাইল আপলোড")
         default_name = st.session_state.cust_user["name"] if st.session_state.cust_user else ""
         default_phone = st.session_state.cust_user["phone"] if st.session_state.cust_user else ""
 
@@ -760,35 +787,91 @@ if not st.session_state.admin_logged_in:
 
         cust_name = fc2.text_input("আপনার নাম / ব্র্যান্ডের নাম *", value=default_name)
 
+        # বর্তমান সিলেক্টেড সাইজের সাথে কাস্টমারের আগের সাইজ মিলছে কি না তা অটো চেক করা
+        current_dim_str1 = f"{length}x{width}x{height}"
+        current_dim_str2 = f"{int(length) if length.is_integer() else length}x{int(width) if width.is_integer() else width}x{int(height) if height.is_integer() else height}"
+        prev_dims_list = live_old_record.get("prev_dims", []) if live_old_record else []
+        is_same_size = (current_dim_str1 in prev_dims_list) or (current_dim_str2 in prev_dims_list)
+
+        repeat_mode = "new_all"
+        discount_reason = ""
+
+        if live_old_record:
+            st.markdown("##### 🔄 পুরাতন কাস্টমার অর্ডার ও ডিজাইন অপশন:")
+            if prev_dims_list:
+                st.caption(f"আপনার পূর্ববর্তী অর্ডারের সংরক্ষিত বক্স সাইজ: **{', '.join(prev_dims_list)} ইঞ্চি**")
+
+            rep_choice = st.radio(
+                "এবারের অর্ডারে কি আগের ডিজাইন ও সাইজই থাকছে, নাকি পরিবর্তন হবে?",
+                [
+                    "✅ আগের হুবহু সাইজ ও আগের প্রিন্টিং ডিজাইন (ডাই ও প্লেট চার্জ সম্পূর্ণ ফ্রি + ৫% ছাড়)",
+                    "🎨 বক্সের সাইজ আগেরটাই, কিন্তু প্রিন্টিং ডিজাইন/লোগো চেঞ্জ হবে (ডাই ফ্রি, তবে নতুন প্লেট চার্জ লাগবে + ৩% ছাড়)",
+                    "📐 বক্সের সাইজ এবং প্রিন্টিং ডিজাইন দুটোই নতুন (নতুন ডাই ও নতুন প্লেট লাগবে, শুধু ৩% লয়্যালটি ছাড়)"
+                ],
+                index=0 if is_same_size else 2
+            )
+
+            if "আগের হুবহু" in rep_choice:
+                repeat_mode = "exact_repeat"
+                discount_reason = "ডাই ও প্রিন্টিং প্লেট চার্জ মওকুফ + ৫% রিপিট ছাড়"
+            elif "ডিজাইন/লোগো চেঞ্জ" in rep_choice:
+                repeat_mode = "same_size_new_design"
+                discount_reason = "আগের ডাই ফ্রি (নতুন ডিজাইন প্লেট চার্জ যুক্ত) + ৩% ছাড়"
+            else:
+                repeat_mode = "new_size_new_design"
+                discount_reason = "নতুন সাইজ ও ডিজাইন (ডাই ও প্লেট চার্জ যুক্ত), ৩% মেম্বার লয়্যালটি ছাড়"
+
         design_upload = st.file_uploader(
-            "📂 আপনার বক্সের ডিজাইন / লোগো ফাইল যুক্ত করুন (.pdf, .ai, .psd, .png, .jpg, .zip)",
+            "📂 আপনার বক্সের ডিজাইন / নতুন লোগো ফাইল যুক্ত করুন (.pdf, .ai, .psd, .png, .jpg, .zip)",
             type=["pdf", "ai", "eps", "psd", "png", "jpg", "jpeg", "zip"]
         )
 
         req_type = st.radio("রিকোয়েস্টের ধরন:", ["অর্ডার কনফার্ম (Order)", "খোলা কোটেশন (Price Quotation Only)"], horizontal=True)
         advance_pay = st.number_input("অ্যাডভান্স পেমেন্ট (যদি থাকে - BDT)", min_value=0.0, value=0.0, step=500.0)
-        cust_notes = st.text_area("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন নির্দেশনা (ঐচ্ছিক)", height=70)
+        cust_notes = st.text_area("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন পরিবর্তনের নির্দেশনা (ঐচ্ছিক)", height=70)
 
+        # ==========================================================
+        # ডায়নামিক কস্ট ক্যালকুলেশন (ডাই + প্লেট আলাদা হিসাব)
+        # ==========================================================
         surface_area = 2 * ((length * width) + (length * height) + (width * height)) * 1.25
         board_cost = surface_area * mat_dict.get(material, 0.045)
         lam_cost = surface_area * finish_dict.get(finish, 0.015)
-        raw_setup_cost = print_dict.get(printing, 2500.0)
         making_cost = 1.50 + box_dict.get(box_type, 0.0)
+
+        # মোট সেটআপ চার্জকে ২ ভাগে ভাগ করা হয়েছে: ৪০% ডাই (Die) চার্জ এবং ৬০% প্রিন্টিং প্লেট (Plate) চার্জ
+        raw_setup_cost = print_dict.get(printing, 2500.0)
+        die_making_cost = raw_setup_cost * 0.40
+        plate_making_cost = raw_setup_cost * 0.60
 
         margin = 1.35 if quantity < 1000 else (1.25 if quantity < 3000 else 1.18)
 
-        reg_unit_cost = board_cost + lam_cost + making_cost + (raw_setup_cost / quantity)
+        # ১. নতুন কাস্টমার বা রেগুলার মূল্য (ডাই + প্লেট দুটোই লাগবে)
+        reg_unit_cost = board_cost + lam_cost + making_cost + ((die_making_cost + plate_making_cost) / quantity)
         reg_unit_price = round(reg_unit_cost * margin, 2)
         reg_total_price = round(reg_unit_price * quantity, 2)
 
+        # ২. পুরাতন কাস্টমারের ৩টি ভিন্ন কেস অনুযায়ী দাম হিসাব
         if live_old_record:
-            discounted_setup = raw_setup_cost * 0.40
-            vip_unit_cost = board_cost + lam_cost + making_cost + (discounted_setup / quantity)
-            unit_selling_price = round((vip_unit_cost * margin) * 0.95, 2)
+            if repeat_mode == "exact_repeat":
+                # কেস ১: সাইজ ও ডিজাইন দুটোই আগের -> ডাই (০) + প্লেট (০), সাথে ৫% ছাড়
+                applied_setup = 0.0
+                loyalty_mult = 0.95
+            elif repeat_mode == "same_size_new_design":
+                # কেস ২: সাইজ আগের কিন্তু ডিজাইন নতুন -> ডাই ফ্রি (০), কিন্তু নতুন প্লেট চার্জ লাগবে, সাথে ৩% ছাড়
+                applied_setup = plate_making_cost
+                loyalty_mult = 0.97
+            else:
+                # কেস ৩: সাইজ ও ডিজাইন দুটোই নতুন -> নতুন ডাই + নতুন প্লেট দুটোই লাগবে, শুধু ৩% মেম্বার ছাড়
+                applied_setup = die_making_cost + plate_making_cost
+                loyalty_mult = 0.97
+
+            vip_unit_cost = board_cost + lam_cost + making_cost + (applied_setup / quantity)
+            unit_selling_price = round((vip_unit_cost * margin) * loyalty_mult, 2)
             total_selling_price = round(unit_selling_price * quantity, 2)
-            discount_saved = round(reg_total_price - total_selling_price, 2)
+            discount_saved = max(0.0, round(reg_total_price - total_selling_price, 2))
             total_prod_cost = round(vip_unit_cost * quantity, 2)
         else:
+            applied_setup = raw_setup_cost
             unit_selling_price = reg_unit_price
             total_selling_price = reg_total_price
             discount_saved = 0.0
@@ -811,6 +894,8 @@ if not st.session_state.admin_logged_in:
                     with open(save_f_path, "wb") as f:
                         f.write(design_upload.getbuffer())
 
+                final_notes = f"[{discount_reason or 'New Order'}] {cust_notes}".strip()
+
                 conn = get_conn()
                 conn.execute(
                     "INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -820,7 +905,7 @@ if not st.session_state.admin_logged_in:
                         f"{length}x{width}x{height}", finish, printing,
                         quantity, unit_selling_price, total_selling_price,
                         discount_saved, advance_pay, due_val, total_prod_cost,
-                        estimated_profit, saved_design_name, cust_notes, status_val
+                        estimated_profit, saved_design_name, final_notes, status_val
                     )
                 )
                 conn.execute(
@@ -835,9 +920,10 @@ if not st.session_state.admin_logged_in:
         discount_html = ""
         if live_old_record and discount_saved > 0:
             discount_html = (
-                f'<div style="background:rgba(34,197,94,0.15); border:1px solid #4ade80; padding:10px 14px; border-radius:10px; margin-top:12px;">'
-                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">👑 মেম্বার ডিসকাউন্ট প্রযোজ্য হয়েছে!</div>'
-                f'<div style="color:#cbd5e1; font-size:0.82rem;">রেগুলার মূল্য: <del>৳ {reg_total_price:,.2f}</del> | সাশ্রয়: <b>৳ {discount_saved:,.2f}</b></div>'
+                f'<div style="background:rgba(34,197,94,0.15); border:1px solid #4ade80; padding:12px 14px; border-radius:10px; margin-top:12px;">'
+                f'<div style="color:#4ade80; font-weight:700; font-size:0.88rem;">👑 মেম্বার অ্যাডজাস্টমেন্ট চালু হয়েছে!</div>'
+                f'<div style="color:#f8fafc; font-size:0.8rem; margin:3px 0;">কারণ: {discount_reason}</div>'
+                f'<div style="color:#cbd5e1; font-size:0.82rem;">রেগুলার মূল্য: <del>৳ {reg_total_price:,.2f}</del> | আপনার সাশ্রয়: <b>৳ {discount_saved:,.2f}</b></div>'
                 f'</div>'
             )
 
@@ -854,7 +940,7 @@ if not st.session_state.admin_logged_in:
             f'{discount_html}'
             f'</div>'
             f'<hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">'
-            f'<div style="font-size:0.86rem; color:#94a3b8; margin-bottom:8px;">সিলেক্টেড স্পেসিফিকেশন:</div>'
+            f'<div style="font-size:0.86rem; color:#94a3b8; margin-bottom:8px;">সিলেক্টেড স্পেসিফিকেশন ও সেটআপ ব্রেকডাউন:</div>'
             f'<div>'
             f'<span class="spec-pill">📦 {box_type}</span>'
             f'<span class="spec-pill">📄 {material}</span>'
@@ -862,6 +948,7 @@ if not st.session_state.admin_logged_in:
             f'<span class="spec-pill">✨ {finish}</span>'
             f'<span class="spec-pill">🎨 {printing}</span>'
             f'<span class="spec-pill">📐 Die-Cut: {surface_area:.1f} sq.in</span>'
+            f'<span class="spec-pill">⚙️ প্রযোজ্য ডাই/প্লেট চার্জ: ৳{applied_setup:,.0f}</span>'
             f'</div></div>',
             unsafe_allow_html=True
         )
@@ -883,7 +970,7 @@ else:
         [
             "💠 ওভারভিউ (Overview)",
             "📑 অর্ডার ও কাস্টমার ফাইল (Orders & Files)",
-            "👥 কাস্টমার রেকর্ড ও ডিসকাউন্ট খাতা (Customers)",
+            "👥 কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট (Customers)",
             "💳 হিসাব খাতা (Accounts & Due)",
             "📦 প্রোডাক্ট ও ছবি আপলোডার (Products CMS)",
             "🏷️ ক্যাটাগরি ও রেট (Categories)",
@@ -1012,9 +1099,9 @@ else:
                 st.rerun()
 
     elif "কাস্টমার" in admin_page:
-        st.markdown("### 👥 রেজিস্টার্ড ও পুরাতন কাস্টমার রেকর্ড")
+        st.markdown("### 👥 রেজিস্টার্ড কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট")
         conn = get_conn()
-        cust_df = pd.read_sql_query("SELECT phone, name, join_date, total_orders FROM customers", conn)
+        cust_df = pd.read_sql_query("SELECT phone, name, password, join_date, total_orders FROM customers", conn)
         conn.close()
         st.dataframe(cust_df, use_container_width=True)
 
@@ -1194,10 +1281,10 @@ else:
                         st.error("❌ নতুন পাসওয়ার্ড দুটি মেলেনি!")
                     else:
                         set_stat("admin_password", new_pw_input.strip())
-                        st.success("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে! এখন থেকে নতুন পাসওয়ার্ড দিয়ে লগইন করবেন।")
+                        st.success("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!")
 
 # ==========================================================
-# ৬. DISCREET FOOTER STAFF LOGIN (ডাটাবেস পাসওয়ার্ড ভেরিফিকেশনসহ)
+# ৬. DISCREET FOOTER STAFF LOGIN
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 15px 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
 f_col1, f_col2 = st.columns([3, 1])
