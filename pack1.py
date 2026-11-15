@@ -456,7 +456,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + FLOATING SOCIAL BAR
+# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + FLOATING SOCIAL BAR (bottom: 70px)
 # ==========================================================
 st.markdown("""
 <style>
@@ -489,7 +489,7 @@ header[data-testid="stHeader"] {
 
 .block-container {
     padding-top: 1.2rem !important;
-    padding-bottom: 2.5rem !important;
+    padding-bottom: 3rem !important;
 }
 
 section[data-testid="stSidebar"],
@@ -551,9 +551,10 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     transform: translateY(-2px);
 }
 
+/* ফ্লোটিং WhatsApp এবং Facebook বাটন উপরে তোলা হয়েছে (bottom: 70px) যাতে Manage app বাটন না ঢাকে */
 .floating-social-bar {
     position: fixed;
-    bottom: 22px;
+    bottom: 70px;
     right: 22px;
     z-index: 9999;
     display: flex;
@@ -788,22 +789,8 @@ fac_addr = get_stat("factory_address", "102 Agasadek Road, Dhaka-1000")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
 # ==========================================================
-# ৪. TOP LANGUAGE SWITCHER + COMPACT BRAND LOGO HEADER
+# ৪. COMPACT BRAND LOGO HEADER
 # ==========================================================
-lang_col1, lang_col2 = st.columns([3.2, 1])
-with lang_col2:
-    lang_choice = st.radio(
-        "🌐 Language / ভাষা:",
-        ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
-        index=0 if st.session_state.lang_mode == "BN" else 1,
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    new_lang = "EN" if "English" in lang_choice else "BN"
-    if new_lang != st.session_state.lang_mode:
-        st.session_state.lang_mode = new_lang
-        st.rerun()
-
 st.markdown(
     f'<div class="hero-logo-banner">'
     f'<img src="{LOGO_SRC}" class="hero-logo-img">'
@@ -1514,7 +1501,7 @@ else:
                         st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
 
 # ==========================================================
-# ৬. BOTTOM CONTACT CARD, FLOATING SOCIAL BAR & LICENSE FOOTER
+# ৬. BOTTOM CONTACT CARD, FLOATING SOCIAL BAR, LANGUAGE SWITCHER & LICENSE FOOTER
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 22px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 
@@ -1539,6 +1526,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ফ্লোটিং বাটনটি bottom: 70px এ রাখা হয়েছে যাতে Manage app এর উপরে থাকে
 st.markdown(
     f'<div class="floating-social-bar">'
     f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="float-btn float-wa" title="Chat on WhatsApp">'
@@ -1549,7 +1537,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-f_col1, f_col2 = st.columns([3, 1])
+# একদম নিচে ফুটারে লাইসেন্স, ভাষা পরিবর্তন (Language Switcher) এবং Staff ERP Portal
+f_col1, f_col2, f_col3 = st.columns([2.2, 1.1, 1])
+
 with f_col1:
     st.markdown(
         f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7;">'
@@ -1560,7 +1550,23 @@ with f_col1:
         f'</div>',
         unsafe_allow_html=True
     )
+
 with f_col2:
+    st.caption("🌐 ভাষা / Language:")
+    lang_choice = st.radio(
+        "🌐 Language / ভাষা:",
+        ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
+        index=0 if st.session_state.lang_mode == "BN" else 1,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="bottom_lang_radio"
+    )
+    new_lang = "EN" if "English" in lang_choice else "BN"
+    if new_lang != st.session_state.lang_mode:
+        st.session_state.lang_mode = new_lang
+        st.rerun()
+
+with f_col3:
     if not st.session_state.admin_logged_in:
         with st.expander("🔐 Staff ERP Portal"):
             adm_pw = st.text_input("Admin Password", type="password", key="footer_adm_pw")
