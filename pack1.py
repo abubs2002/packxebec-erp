@@ -6,7 +6,7 @@ import os
 import base64
 import re
 
-# ডার্ক থিম ও ফোল্ডার কনফিগ
+# ফোল্ডার ও একবারের জন্য কনফিগ তৈরি (যাতে রিলোড লুপ না হয়)
 os.makedirs(".streamlit", exist_ok=True)
 os.makedirs("product_images", exist_ok=True)
 os.makedirs("customer_files", exist_ok=True)
@@ -420,7 +420,6 @@ DARK_LOGO_PARTS = [
 ]
 LOGO_SRC = svg_to_b64("".join(DARK_LOGO_PARTS))
 
-# অফিসিয়াল Facebook, WhatsApp ও Messenger SVG আইকন
 FB_ICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
     'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
@@ -457,7 +456,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. COMPACT LOGO, SOCIAL BUTTONS & FLOATING WIDGET CSS
+# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + FLOATING SOCIAL BAR
 # ==========================================================
 st.markdown("""
 <style>
@@ -472,6 +471,22 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 
+/* ওয়েবসাইটের ওপরের GitHub আইকন, Share বাটন, Edit ও Streamlit মেনু সম্পূর্ণ লুকানোর কোড */
+[data-testid="stToolbar"],
+[data-testid="stToolbarActions"],
+[data-testid="stHeaderActionElements"],
+.stAppDeployButton,
+#MainMenu,
+footer {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 0px !important;
+}
+
 .block-container {
     padding-top: 1.2rem !important;
     padding-bottom: 2.5rem !important;
@@ -482,9 +497,6 @@ button[data-testid="collapsedControl"] {
     display: none !important;
 }
 
-header[data-testid="stHeader"] {
-    background: transparent !important;
-}
 h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     color: #f8fafc !important;
     font-weight: 600 !important;
@@ -539,7 +551,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     transform: translateY(-2px);
 }
 
-/* ফ্লোটিং WhatsApp এবং Facebook চ্যাট বাটন */
 .floating-social-bar {
     position: fixed;
     bottom: 22px;
@@ -1507,7 +1518,6 @@ else:
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 22px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 
-# একদম নিচে লাইসেন্সের সাথে অফিসিয়াল Facebook ও WhatsApp আইকনসহ কন্টাক্ট কার্ড
 st.markdown(
     f'<div class="dark-glass-card" style="padding:22px 26px; margin-bottom:18px;">'
     f'<div style="font-size:1.08rem; font-weight:800; color:#60a5fa; margin-bottom:12px;">'
@@ -1529,7 +1539,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# স্ক্রিনের ডান কোণায় ভাসমান (Floating) WhatsApp ও Facebook বাটন
 st.markdown(
     f'<div class="floating-social-bar">'
     f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="float-btn float-wa" title="Chat on WhatsApp">'
