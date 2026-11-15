@@ -129,7 +129,6 @@ def init_db():
         default_stats
     )
 
-    # আগে পুরনো প্লেসহোল্ডার নম্বর বা ঠিকানা সেভ থাকলে তা অটোমেটিক আসল তথ্যে আপডেট করে দেওয়া
     c.execute(
         "UPDATE site_stats SET stat_val='01776008987' "
         "WHERE stat_key='factory_phone' AND stat_val IN ('01XXXXXXXXX', '+880 17XX-XXXXXX')"
@@ -378,7 +377,7 @@ def fmt_opt(val):
     return cleaned if cleaned else s
 
 # ==========================================================
-# ২. PACKXEBEC BRAND LOGO (Compact & Clean)
+# ২. BRAND LOGO & OFFICIAL FACEBOOK / WHATSAPP / MESSENGER SVG ICONS
 # ==========================================================
 DARK_LOGO_PARTS = [
     '<svg viewBox="0 0 500 430" xmlns="http://www.w3.org/2000/svg">',
@@ -421,8 +420,44 @@ DARK_LOGO_PARTS = [
 ]
 LOGO_SRC = svg_to_b64("".join(DARK_LOGO_PARTS))
 
+# অফিসিয়াল Facebook, WhatsApp ও Messenger SVG আইকন
+FB_ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
+    '<circle cx="12" cy="12" r="12" fill="#1877F2"/>'
+    '<path d="M15.12 12.6H13.2V19.5H10.35V12.6H8.95V10.15H10.35V8.55'
+    'C10.35 6.45 11.55 5.3 13.55 5.3C14.45 5.3 15.4 5.45 15.4 5.45V7.55'
+    'H14.35C13.3 7.55 13.2 8.15 13.2 8.85V10.15H15.3L15.12 12.6Z" fill="#ffffff"/>'
+    '</svg>'
+)
+
+WA_ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
+    '<circle cx="12" cy="12" r="12" fill="#25D366"/>'
+    '<path d="M17.5 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15'
+    '-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.39-1.48'
+    '-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52'
+    '.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.21'
+    '-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37'
+    '-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 '
+    '5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 '
+    '2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z" fill="#ffffff"/>'
+    '</svg>'
+)
+
+MSG_ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
+    '<circle cx="12" cy="12" r="12" fill="#0084FF"/>'
+    '<path d="M12 5.5c-3.87 0-7 2.86-7 6.39 0 2.01 1.02 3.8 2.61 4.97V19.5'
+    'l2.39-1.31c.64.18 1.31.28 2 .28 3.87 0 7-2.86 7-6.39S15.87 5.5 12 5.5z'
+    'm.7 8.61l-1.78-1.9-3.48 1.9 3.83-4.07 1.82 1.9 3.44-1.9-3.83 4.07z" fill="#ffffff"/>'
+    '</svg>'
+)
+
 # ==========================================================
-# ৩. COMPACT LOGO, SOCIAL BUTTONS & ZOOMABLE PRODUCT CARDS CSS
+# ৩. COMPACT LOGO, SOCIAL BUTTONS & FLOATING WIDGET CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -439,7 +474,7 @@ html, body, [class*="css"] {
 
 .block-container {
     padding-top: 1.2rem !important;
-    padding-bottom: 2rem !important;
+    padding-bottom: 2.5rem !important;
 }
 
 section[data-testid="stSidebar"],
@@ -486,22 +521,58 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 .social-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(37, 99, 235, 0.18);
-    color: #60a5fa !important;
-    padding: 5px 14px;
+    gap: 4px;
+    background: rgba(30, 41, 59, 0.85);
+    color: #f8fafc !important;
+    padding: 6px 15px;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    border: 1px solid rgba(96, 165, 250, 0.35);
+    border: 1px solid rgba(148, 163, 184, 0.3);
     text-decoration: none !important;
     margin: 4px 5px;
-    transition: all 0.2s ease;
+    transition: all 0.22s ease;
 }
 .social-pill:hover {
-    background: #2563eb;
-    color: #ffffff !important;
+    border-color: #ec4899;
+    background: rgba(37, 99, 235, 0.25);
     transform: translateY(-2px);
+}
+
+/* ফ্লোটিং WhatsApp এবং Facebook চ্যাট বাটন */
+.floating-social-bar {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.float-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+    transition: all 0.25s ease;
+}
+.float-wa {
+    background: linear-gradient(135deg, #16a34a 0%, #25D366 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.float-fb {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1877F2 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.float-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
 }
 
 .dark-glass-card {
@@ -725,14 +796,14 @@ with lang_col2:
 st.markdown(
     f'<div class="hero-logo-banner">'
     f'<img src="{LOGO_SRC}" class="hero-logo-img">'
-    f'<div style="color:#cbd5e1; font-size:0.9rem; font-weight:500; margin-bottom:8px;">'
+    f'<div style="color:#cbd5e1; font-size:0.9rem; font-weight:500; margin-bottom:10px;">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
     f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px;">'
     f'<span class="live-badge">● Online Ordering Active</span>'
-    f'<a href="{fb_url}" target="_blank" class="social-pill">📘 fb.com/packxebec</a>'
-    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">💬 WhatsApp: {fac_phone}</a>'
-    f'<a href="tel:{fac_phone}" class="social-pill">📞 Call: {fac_phone}</a>'
+    f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
+    f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
     f'<span class="social-pill">📍 {fac_addr}</span>'
     f'</div>'
     f'</div>',
@@ -1432,34 +1503,51 @@ else:
                         st.success(tr("🎉 অ্যাডমিন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "🎉 Admin password changed successfully!"))
 
 # ==========================================================
-# ৬. BOTTOM CONTACT CARD, LICENSE FOOTER & STAFF PORTAL
+# ৬. BOTTOM CONTACT CARD, FLOATING SOCIAL BAR & LICENSE FOOTER
 # ==========================================================
 st.markdown("<hr style='margin:40px 0 22px 0; border-color:rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 
-# একদম নিচে লাইসেন্সের সাথে সরাসরি যোগাযোগ ও অফিসিয়াল পেজ কার্ড
+# একদম নিচে লাইসেন্সের সাথে অফিসিয়াল Facebook ও WhatsApp আইকনসহ কন্টাক্ট কার্ড
 st.markdown(
-    f'<div class="dark-glass-card" style="padding:20px 24px; margin-bottom:18px;">'
-    f'<div style="font-size:1.05rem; font-weight:800; color:#60a5fa; margin-bottom:10px;">'
+    f'<div class="dark-glass-card" style="padding:22px 26px; margin-bottom:18px;">'
+    f'<div style="font-size:1.08rem; font-weight:800; color:#60a5fa; margin-bottom:12px;">'
     f'📍 {tr("সরাসরি যোগাযোগ ও অফিসিয়াল পেজ", "Direct Contact & Official Page")}'
     f'</div>'
-    f'<div style="font-size:0.9rem; color:#e2e8f0; line-height:1.8;">'
-    f'<div>📘 <b>Facebook Page:</b> <a href="{fb_url}" target="_blank" style="color:#f472b6; text-decoration:none; font-weight:700;">facebook.com/packxebec ↗</a></div>'
-    f'<div>💬 <b>Direct Inbox:</b> <a href="{msg_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">m.me/packxebec ↗</a> &nbsp;|&nbsp; '
-    f'🟢 <b>WhatsApp Chat:</b> <a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">wa.me/88{fac_phone} ↗</a></div>'
-    f'<div>📞 <b>Hotline / WhatsApp / Real Number:</b> <a href="tel:{fac_phone}" style="color:#4ade80; text-decoration:none; font-weight:800;">{fac_phone}</a></div>'
-    f'<div>✉️ <b>Email:</b> {fac_email}</div>'
+    f'<div style="font-size:0.92rem; color:#e2e8f0; line-height:2.0;">'
+    f'<div style="display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:4px;">'
+    f'<a href="{fb_url}" target="_blank" class="social-pill" style="background:rgba(24,119,242,0.18); border-color:#1877F2;">'
+    f'{FB_ICON_SVG} facebook.com/packxebec ↗</a>'
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill" style="background:rgba(37,211,102,0.18); border-color:#25D366;">'
+    f'{WA_ICON_SVG} WhatsApp: {fac_phone} ↗</a>'
+    f'<a href="{msg_url}" target="_blank" class="social-pill" style="background:rgba(0,132,255,0.18); border-color:#0084FF;">'
+    f'{MSG_ICON_SVG} m.me/packxebec ↗</a>'
+    f'</div>'
+    f'<div>📞 <b>Hotline / Real Number:</b> <a href="tel:{fac_phone}" style="color:#4ade80; text-decoration:none; font-weight:800;">{fac_phone}</a> &nbsp;|&nbsp; '
+    f'✉️ <b>Email:</b> {fac_email}</div>'
     f'<div>🏢 <b>{tr("ঠিকানা:", "Address:")}</b> {fac_addr}</div>'
     f'</div></div>',
+    unsafe_allow_html=True
+)
+
+# স্ক্রিনের ডান কোণায় ভাসমান (Floating) WhatsApp ও Facebook বাটন
+st.markdown(
+    f'<div class="floating-social-bar">'
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="float-btn float-wa" title="Chat on WhatsApp">'
+    f'{WA_ICON_SVG} <span>WhatsApp</span></a>'
+    f'<a href="{fb_url}" target="_blank" class="float-btn float-fb" title="Visit Facebook Page">'
+    f'{FB_ICON_SVG} <span>Facebook</span></a>'
+    f'</div>',
     unsafe_allow_html=True
 )
 
 f_col1, f_col2 = st.columns([3, 1])
 with f_col1:
     st.markdown(
-        f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.6;">'
+        f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7;">'
         f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
-        f'📍 {fac_addr} &nbsp;|&nbsp; 📞 <b style="color:#4ade80;">{fac_phone}</b> &nbsp;|&nbsp; '
-        f'📘 <a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none;">facebook.com/packxebec</a>'
+        f'📍 {fac_addr} &nbsp;|&nbsp; '
+        f'<a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">{WA_ICON_SVG}{fac_phone}</a> &nbsp;|&nbsp; '
+        f'<a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">{FB_ICON_SVG}facebook.com/packxebec</a>'
         f'</div>',
         unsafe_allow_html=True
     )
