@@ -6,7 +6,7 @@ import os
 import base64
 import re
 
-# ফোল্ডার ও একবারের জন্য কনফিগ তৈরি (যাতে রিলোড লুপ না হয়)
+# ফোল্ডার ও একবারের জন্য কনফিগ তৈরি
 os.makedirs(".streamlit", exist_ok=True)
 os.makedirs("product_images", exist_ok=True)
 os.makedirs("customer_files", exist_ok=True)
@@ -456,7 +456,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + FLOATING SOCIAL BAR (bottom: 70px)
+# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + CENTERED LANGUAGE BAR
 # ==========================================================
 st.markdown("""
 <style>
@@ -488,7 +488,7 @@ header[data-testid="stHeader"] {
 }
 
 .block-container {
-    padding-top: 1.2rem !important;
+    padding-top: 1rem !important;
     padding-bottom: 3rem !important;
 }
 
@@ -506,12 +506,12 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(19, 28, 49, 0.95) 100%);
     border: 1px solid #26334d;
     border-radius: 18px;
-    padding: 16px 24px;
+    padding: 16px 24px 14px 24px;
     text-align: center;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
     position: relative;
     overflow: hidden;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .hero-logo-banner::before {
     content: "";
@@ -530,9 +530,21 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     transform: scale(1.05);
 }
 
-/* রেডিও বাটন সেন্টারিং */
-div[data-testid="stRadio"] > div[role="radiogroup"] {
+/* ভাষা পরিবর্তনের রেডিও বাটনকে লোগো ও টাইটেলের ঠিক নিচে মাঝখানে সুন্দর পিল আকারে দেখানো */
+div[data-testid="stRadio"] {
+    display: flex;
     justify-content: center;
+    margin-top: -2px;
+    margin-bottom: 12px;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #334155;
+    padding: 6px 20px;
+    border-radius: 999px;
+    justify-content: center;
+    gap: 18px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 .social-pill {
@@ -794,12 +806,12 @@ fac_addr = get_stat("factory_address", "102 Agasadek Road, Dhaka-1000")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
 # ==========================================================
-# ৪. COMPACT BRAND LOGO HEADER + LANGUAGE SWITCHER RIGHT BELOW IT
+# ৪. BRAND LOGO & TITLE BANNER + LANGUAGE SWITCHER DIRECTLY UNDERNEATH
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
     f'<img src="{LOGO_SRC}" class="hero-logo-img">'
-    f'<div style="color:#cbd5e1; font-size:0.9rem; font-weight:500; margin-bottom:10px;">'
+    f'<div style="color:#cbd5e1; font-size:0.92rem; font-weight:600; margin-bottom:10px;">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
     f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px;">'
@@ -813,21 +825,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# লোগো এবং টাইটেল ব্যানারের ঠিক নিচেই মাঝখানে ভাষা পরিবর্তনের অপশন
-lang_c1, lang_c2, lang_c3 = st.columns([1.2, 1.6, 1.2])
-with lang_c2:
-    lang_choice = st.radio(
-        "🌐 Language / ভাষা:",
-        ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
-        index=0 if st.session_state.lang_mode == "BN" else 1,
-        horizontal=True,
-        label_visibility="collapsed",
-        key="under_logo_lang_radio"
-    )
-    new_lang = "EN" if "English" in lang_choice else "BN"
-    if new_lang != st.session_state.lang_mode:
-        st.session_state.lang_mode = new_lang
-        st.rerun()
+# লোগো এবং টাইটেলের ঠিক নিচেই মাঝখানে ভাষা পরিবর্তনের অপশন
+lang_choice = st.radio(
+    "🌐 Language / ভাষা:",
+    ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
+    index=0 if st.session_state.lang_mode == "BN" else 1,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="centered_under_logo_lang"
+)
+new_lang = "EN" if "English" in lang_choice else "BN"
+if new_lang != st.session_state.lang_mode:
+    st.session_state.lang_mode = new_lang
+    st.rerun()
 
 # ==========================================================
 # PART A: CUSTOMER STUDIO
