@@ -471,6 +471,8 @@ if "cust_user" not in st.session_state:
     st.session_state.cust_user = None
 if "show_cust_panel" not in st.session_state:
     st.session_state.show_cust_panel = False
+if "admin_menu_key" not in st.session_state:
+    st.session_state.admin_menu_key = "overview"
 
 def tr(bn_text, en_text):
     return en_text if st.session_state.get("lang_mode") == "EN" else bn_text
@@ -572,7 +574,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. CSS: CLEAN FLAT HEADER + MATCHING DARK PILLS
+# ৩. CSS: CLEAN FLAT HEADER + TIGHT CENTERED DARK PILLS
 # ==========================================================
 st.markdown("""
 <style>
@@ -619,8 +621,8 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
 
 .clean-hero-wrap {
     text-align: center;
-    padding: 8px 10px 6px 10px;
-    margin-bottom: 6px;
+    padding: 8px 10px 4px 10px;
+    margin-bottom: 4px;
     background: transparent;
     border: none;
 }
@@ -638,7 +640,7 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-size: 0.9rem;
     font-weight: 500;
     letter-spacing: 0.2px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .social-pill {
@@ -656,6 +658,7 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     margin: 2px 3px;
     min-height: 36px;
     box-sizing: border-box;
+    white-space: nowrap;
     transition: all 0.22s ease;
 }
 .social-pill:hover {
@@ -874,8 +877,9 @@ div.stButton > button, div[data-testid="stFormSubmitButton"] > button {
     width: 100%;
 }
 
-/* টপ নেভিগেশন বাটনগুলোকে (কাস্টমার প্যানেল ও বাং | ENG) একদম ছবির মতো ডার্ক পিল স্টাইলে রাখা */
-div[data-testid="stButton"] > button[kind="primary"] {
+/* টপ নেভিগেশন বাটন ও মেনু পপওভারকে একদম ছবির মতো নরমাল ডার্ক পিল স্টাইলে রাখা */
+div[data-testid="stButton"] > button[kind="primary"],
+div[data-testid="stPopover"] > button {
     background: rgba(30, 41, 59, 0.72) !important;
     color: #f8fafc !important;
     border: 1px solid rgba(148, 163, 184, 0.28) !important;
@@ -888,9 +892,11 @@ div[data-testid="stButton"] > button[kind="primary"] {
     line-height: 1.2 !important;
     white-space: nowrap !important;
     box-shadow: none !important;
+    width: 100% !important;
     transition: all 0.22s ease !important;
 }
-div[data-testid="stButton"] > button[kind="primary"]:hover {
+div[data-testid="stButton"] > button[kind="primary"]:hover,
+div[data-testid="stPopover"] > button:hover {
     border-color: #ec4899 !important;
     background: rgba(37, 99, 235, 0.24) !important;
     transform: translateY(-1px) !important;
@@ -925,8 +931,23 @@ margin_b3k = float(get_stat("margin_bulk_3k", "18.0"))
 board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
 lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
 
+# অ্যাডমিন মেনু তালিকা (আইডি ও লেবেল)
+ADMIN_MENU_LIST = [
+    ("overview", tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard")),
+    ("market", tr("🏷️ ক্যাটাগরি ও বাজার দর (Market Rates)", "🏷️ Categories & Market Rates")),
+    ("orders", tr("📑 অর্ডার ও কাস্টমার ফাইল (Orders)", "📑 Orders & Customer Files")),
+    ("customers", tr("👥 কাস্টমার রেকর্ড (Customers)", "👥 Customer Records")),
+    ("accounts", tr("💳 হিসাব খাতা (Accounts & Due)", "💳 Accounts & Due Manager")),
+    ("products", tr("📦 প্রোডাক্ট ও ছবি (Products CMS)", "📦 Products & Photo CMS")),
+    ("traffic", tr("📊 ট্রাফিক (Traffic)", "📊 Website Traffic")),
+    ("interest", tr("✨ প্রোডাক্টের আগ্রহ (Interest)", "✨ Product Interest & Clicks")),
+    ("search", tr("🔍 সার্চ (Search)", "🔍 Global Search")),
+    ("seo", tr("🌐 এসইও (SEO)", "🌐 SEO Configuration")),
+    ("settings", tr("⚙️ সেটিংস ও পাসওয়ার্ড (Settings)", "⚙️ Settings & Security"))
+]
+
 # ==========================================================
-# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + SINGLE ROW CENTERED PILLS)
+# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + TIGHT CENTERED NAV ROW)
 # ==========================================================
 st.markdown(
     f'<div class="clean-hero-wrap">'
@@ -938,12 +959,21 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+social_pills_html = (
+    f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
+    f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
+    f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
+    f'<span class="social-pill">📍 {fac_addr}</span>'
+    f'</div>'
+)
+
 if not st.session_state.admin_logged_in:
-    # কাস্টমার পেজে: [👤 কাস্টমার প্যানেল] [Facebook] [WhatsApp] [Messenger] [Address] [🌐 বাং | ENG]
-    sp_l, nav_c1, nav_c2, nav_c3, sp_r = st.columns([0.55, 1.25, 4.45, 0.95, 0.55], gap="small")
+    # কাস্টমার পেজে একদম মাঝখানে পাশাপাশি: [👤 কাস্টমার প্যানেল] [Social Pills] [🌐 বাং | ENG]
+    sp_l, nav_c1, nav_c2, nav_c3, sp_r = st.columns([1.25, 1.15, 4.35, 0.95, 1.25], gap="small")
     with nav_c1:
         cust_btn_lbl = (
-            f"👑 {st.session_state.cust_user['name'][:11]}"
+            f"👑 {st.session_state.cust_user['name'][:10]}"
             if st.session_state.cust_user
             else tr("👤 কাস্টমার প্যানেল", "👤 Customer Panel")
         )
@@ -952,36 +982,33 @@ if not st.session_state.admin_logged_in:
             st.rerun()
 
     with nav_c2:
-        st.markdown(
-            f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
-            f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
-            f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
-            f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
-            f'<span class="social-pill">📍 {fac_addr}</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown(social_pills_html, unsafe_allow_html=True)
 
     with nav_c3:
         if st.button("🌐 বাং | ENG", key="top_lang_toggle_btn", type="primary"):
             st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
             st.rerun()
 else:
-    # অ্যাডমিন ব্যাকএন্ডে কাস্টমার প্যানেল বাদ দেওয়া হয়েছে
-    sp_l, nav_c2, nav_c3, sp_r = st.columns([1.0, 4.6, 1.0, 1.0], gap="small")
-    with nav_c2:
-        st.markdown(
-            f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
-            f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
-            f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
-            f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
-            f'<span class="social-pill">📍 {fac_addr}</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-    with nav_c3:
+    # অ্যাডমিন প্যানেলে: [☰ মেনু] [Social Pills] [🌐 বাং | ENG] [🚪 লগআউট]
+    sp_l, nav_m, nav_s, nav_l, nav_e, sp_r = st.columns([0.8, 0.85, 4.35, 0.95, 0.95, 0.8], gap="small")
+    with nav_m:
+        with st.popover(tr("☰ মেনু", "☰ Menu"), use_container_width=True):
+            for m_key, m_lbl in ADMIN_MENU_LIST:
+                if st.button(m_lbl, key=f"adm_nav_{m_key}", type="primary", use_container_width=True):
+                    st.session_state.admin_menu_key = m_key
+                    st.rerun()
+
+    with nav_s:
+        st.markdown(social_pills_html, unsafe_allow_html=True)
+
+    with nav_l:
         if st.button("🌐 বাং | ENG", key="top_lang_toggle_adm_btn", type="primary"):
             st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
+            st.rerun()
+
+    with nav_e:
+        if st.button(tr("🚪 লগআউট", "🚪 Exit"), key="top_adm_exit_btn", type="primary"):
+            st.session_state.admin_logged_in = False
             st.rerun()
 
 # ==========================================================
@@ -1354,33 +1381,9 @@ if not st.session_state.admin_logged_in:
 # PART B: ADMIN BACKEND
 # ==========================================================
 else:
-    top_adm1, top_adm2 = st.columns([3, 1])
-    with top_adm1:
-        st.markdown(tr(
-            "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
-            "### 🔐 packxebec — Admin Backend & ERP Control Panel"
-        ))
-    with top_adm2:
-        if st.button(tr("🚪 অ্যাডমিন থেকে বের হন (Back to Customer Site)", "🚪 Exit Admin (Back to Customer Site)")):
-            st.session_state.admin_logged_in = False
-            st.rerun()
-
-    menu_items = [
-        tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard"),
-        tr("🏷️ ক্যাটাগরি ও বাজার দর (Market Rates & Materials)", "🏷️ Categories & Live Market Pricing"),
-        tr("📑 অর্ডার ও কাস্টমার ফাইল (Orders & Files)", "📑 Orders & Customer Files"),
-        tr("👥 কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট (Customers)", "👥 Customer Records & Password Reset"),
-        tr("💳 হিসাব খাতা (Accounts & Due)", "💳 Accounts & Due Manager"),
-        tr("📦 প্রোডাক্ট ও ছবি আপলোডার (Products CMS)", "📦 Products & Photo CMS"),
-        tr("📊 ট্রাফিক (Traffic)", "📊 Website Traffic"),
-        tr("✨ প্রোডাক্টের আগ্রহ (Interest)", "✨ Product Interest & Clicks"),
-        tr("🔍 সার্চ (Search)", "🔍 Global Search"),
-        tr("🌐 এসইও (SEO)", "🌐 SEO Configuration"),
-        tr("⚙️ সেটিংস, ঠিকানা ও পাসওয়ার্ড (Settings & Security)", "⚙️ Settings, Address & Security")
-    ]
-
-    admin_page = st.selectbox(tr("🧭 ব্যাকএন্ড মেনু সিলেক্ট করুন:", "🧭 Select Backend Menu:"), menu_items)
-    st.markdown("<hr style='margin:14px 0; border-color:rgba(255,255,255,0.12);'>", unsafe_allow_html=True)
+    admin_key = st.session_state.admin_menu_key
+    cur_menu_lbl = dict(ADMIN_MENU_LIST).get(admin_key, "")
+    st.markdown(f"<div style='margin-top:8px; margin-bottom:14px; font-size:1.2rem; font-weight:800; color:#f8fafc;'>🔐 packxebec ERP &nbsp;•&nbsp; <span style='color:#60a5fa;'>{cur_menu_lbl}</span></div>", unsafe_allow_html=True)
 
     orders_df = get_orders_df()
     catalog_df = get_catalog_df()
@@ -1408,7 +1411,7 @@ else:
         best_prod_qty = int(top_row["quantity"])
         best_prod_rev = float(top_row["total_price"])
 
-    if "Overview" in admin_page or "ওভারভিউ" in admin_page:
+    if admin_key == "overview":
         r1_c1, r1_c2, r1_c3 = st.columns(3, gap="medium")
         with r1_c1:
             st.markdown(
@@ -1475,7 +1478,7 @@ else:
                 f'</div></div>', unsafe_allow_html=True
             )
 
-    elif "Categories" in admin_page or "ক্যাটাগরি" in admin_page or "Market" in admin_page:
+    elif admin_key == "market":
         st.markdown(tr(
             "### 📈 কাঁচামালের বাজার দর ও রেট কন্ট্রোলার (Board, Flute, Corrugated, Duplex & Lamination)",
             "### 📈 Raw Material Market Rate Controller (Board, Flute, Corrugated, Duplex & Lamination)"
@@ -1612,7 +1615,7 @@ else:
                     st.success(tr(f"✅ '{oname}' সফলভাবে যুক্ত হয়েছে!", f"✅ '{oname}' added successfully!"))
                     st.rerun()
 
-    elif "Orders" in admin_page or "অর্ডার" in admin_page:
+    elif admin_key == "orders":
         st.markdown(tr("### 📑 অর্ডার, কোটেশন এবং কাস্টমারের আপলোড করা ডিজাইন ফাইল", "### 📑 Orders, Quotations & Customer Artwork Files"))
         if orders_df.empty:
             st.info(tr("এখনো কোনো অর্ডার নেই।", "No orders found yet."))
@@ -1635,7 +1638,7 @@ else:
                 st.success(tr("✅ স্ট্যাটাস আপডেট হয়েছে!", "✅ Status updated!"))
                 st.rerun()
 
-    elif "Customers" in admin_page or "কাস্টমার" in admin_page:
+    elif admin_key == "customers":
         st.markdown(tr("### 👥 রেজিস্টার্ড কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট", "### 👥 Registered Customers & Password Reset"))
         cust_df = run_query("SELECT phone, name, password, join_date, total_orders FROM customers")
         st.dataframe(cust_df, use_container_width=True)
@@ -1651,7 +1654,7 @@ else:
             ).reset_index()
             st.dataframe(cust_summary, use_container_width=True)
 
-    elif "Accounts" in admin_page or "হিসাব" in admin_page:
+    elif admin_key == "accounts":
         st.markdown(tr("### 💳 হিসাব খাতা (মোট বাকি ও আদায় ম্যানেজার)", "### 💳 Accounts & Due Payment Manager"))
         if not orders_df.empty:
             p_c1, p_c2, p_c3 = st.columns(3)
@@ -1669,7 +1672,7 @@ else:
                 st.success(tr("🎉 পেমেন্ট আপডেট হয়েছে!", "🎉 Payment updated!"))
                 st.rerun()
 
-    elif "Products" in admin_page or "প্রোডাক্ট" in admin_page:
+    elif admin_key == "products":
         st.markdown(tr("### 📦 প্রোডাক্ট গ্যালারি ও ছবি আপলোডার", "### 📦 Product Gallery & Photo Uploader"))
         col_add, col_edit = st.columns([1.1, 1], gap="large")
         with col_add:
@@ -1733,7 +1736,7 @@ else:
                     conn.close()
                     st.rerun()
 
-    elif "Traffic" in admin_page or "ট্রাফিক" in admin_page:
+    elif admin_key == "traffic":
         with st.form("traffic_update"):
             u_vis = st.number_input(tr("আজকের ভিজিটর সংখ্যা", "Visitors Today"), value=int(today_vis))
             u_pvw = st.number_input(tr("পেজ ভিউ সংখ্যা", "Page Views"), value=int(page_vw))
@@ -1745,10 +1748,10 @@ else:
                 st.success(tr("✅ ট্রাফিক ডাটা আপডেট হয়েছে!", "✅ Traffic stats updated!"))
                 st.rerun()
 
-    elif "Interest" in admin_page or "আগ্রহ" in admin_page:
+    elif admin_key == "interest":
         st.dataframe(catalog_df[["id", "title", "code", "material", "clicks"]].sort_values(by="clicks", ascending=False), use_container_width=True)
 
-    elif "Search" in admin_page or "সার্চ" in admin_page:
+    elif admin_key == "search":
         sq = st.text_input(tr("অর্ডার আইডি, কাস্টমারের নাম বা ফোন নম্বর লিখুন:", "Search by Order ID, Customer Name or Phone:"))
         if sq.strip():
             res_ord = orders_df[
@@ -1758,7 +1761,7 @@ else:
             ]
             st.dataframe(res_ord, use_container_width=True)
 
-    elif "SEO" in admin_page or "এসইও" in admin_page:
+    elif admin_key == "seo":
         with st.form("seo_form"):
             s_title = st.text_input("SEO Website Title", value=get_stat("seo_title"))
             s_keys = st.text_input("Target Keywords", value=get_stat("seo_keywords"))
@@ -1769,7 +1772,7 @@ else:
                 set_stat("seo_desc", s_desc)
                 st.success(tr("✅ এসইও কনফিগারেশন সেভ হয়েছে!", "✅ SEO configuration saved!"))
 
-    elif "Settings" in admin_page or "সেটিংস" in admin_page:
+    elif admin_key == "settings":
         st.markdown(tr("### ⚙️ কোম্পানির ঠিকানা, ফেসবুক পেজ ও পাসওয়ার্ড সেটিংস", "### ⚙️ Company Address, Facebook Page & Security Settings"))
         set_col1, set_col2 = st.columns(2, gap="large")
 
