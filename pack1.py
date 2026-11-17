@@ -6,6 +6,13 @@ import os
 import base64
 import re
 
+# ক্লাউড ডাটাবেস (Turso) সাপোর্টের জন্য অপশনাল ইমপোর্ট
+try:
+    import libsql_experimental as libsql
+    HAS_LIBSQL = True
+except ImportError:
+    HAS_LIBSQL = False
+
 # ফোল্ডার ও একবারের জন্য কনফিগ তৈরি
 os.makedirs(".streamlit", exist_ok=True)
 os.makedirs("product_images", exist_ok=True)
@@ -29,10 +36,37 @@ st.set_page_config(
 DB_NAME = "packxebec_erp_v4.db"
 
 # ==========================================================
-# ১. SQLITE DATABASE ENGINE
+# ১. HYBRID PERSISTENT DATABASE ENGINE (TURSO CLOUD + SQLITE FALLBACK)
 # ==========================================================
+def is_cloud_db_active():
+    try:
+        return (
+            HAS_LIBSQL
+            and "TURSO_DATABASE_URL" in st.secrets
+            and "TURSO_AUTH_TOKEN" in st.secrets
+            and bool(st.secrets["TURSO_DATABASE_URL"].strip())
+        )
+    except Exception:
+        return False
+
 def get_conn():
+    if is_cloud_db_active():
+        return libsql.connect(
+            database=st.secrets["TURSO_DATABASE_URL"].strip(),
+            auth_token=st.secrets["TURSO_AUTH_TOKEN"].strip()
+        )
     return sqlite3.connect(DB_NAME, check_same_thread=False)
+
+def run_query(query, params=()):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(query, params)
+    cols = [desc[0] for desc in cur.description] if cur.description else []
+    rows = cur.fetchall()
+    conn.close()
+    if not cols:
+        return pd.DataFrame()
+    return pd.DataFrame(rows, columns=cols)
 
 def init_db():
     conn = get_conn()
@@ -123,30 +157,17 @@ def init_db():
         ("factory_email", "contact@packxebec.com"),
         ("enable_customer_login", "1"),
         ("admin_password", "admin123"),
-        # বাজার দর ওঠানামা নিয়ন্ত্রণের নতুন ব্যাকএন্ড ভেরিয়েবল
-        ("board_market_adj_pct", "0.0"),       # বোর্ড, ফ্লুট ও পেপারের বাজার দর হ্রাস/বৃদ্ধি (%)
-        ("lam_market_adj_pct", "0.0"),         # ল্যামিনেশন আইটেমের বাজার দর হ্রাস/বৃদ্ধি (%)
-        ("base_making_cost", "1.50"),          # প্রতি বক্সের বেস মেকিং ও পেস্টিং খরচ (BDT)
-        ("wastage_Allowance", "1.25"),         # শিট ওয়েস্টেজ ও ফ্ল্যাপ মাল্টিপ্লায়ার
-        ("margin_under_1k", "35.0"),           # ১০০০ পিসের নিচে প্রফিট মার্জিন (%)
-        ("margin_under_3k", "25.0"),           # ১০০০-২৯৯৯ পিসে প্রফিট মার্জিন (%)
-        ("margin_bulk_3k", "18.0")             # ৩০০০+ পিসে প্রফিট মার্জিন (%)
+        ("board_market_adj_pct", "0.0"),
+        ("lam_market_adj_pct", "0.0"),
+        ("base_making_cost", "1.50"),
+        ("wastage_Allowance", "1.25"),
+        ("margin_under_1k", "35.0"),
+        ("margin_under_3k", "25.0"),
+        ("margin_bulk_3k", "18.0")
     ]
-    c.executemany(
-        "INSERT OR IGNORE INTO site_stats VALUES (?, ?)",
-        default_stats
-    )
+    for k, v in default_stats:
+        c.execute("INSERT OR IGNORE INTO site_stats VALUES (?, ?)", (k, v))
 
-    c.execute(
-        "UPDATE site_stats SET stat_val='01776008987' "
-        "WHERE stat_key='factory_phone' AND stat_val IN ('01XXXXXXXXX', '+880 17XX-XXXXXX')"
-    )
-    c.execute(
-        "UPDATE site_stats SET stat_val='102 Agasadek Road, Dhaka-1000' "
-        "WHERE stat_key='factory_address' AND stat_val LIKE 'Dhaka, Bangladesh%'"
-    )
-
-    # সকল বোর্ড, ফ্লুট পেপার, করুগেটেড শিট, ডুপ্লেক্স বোর্ড এবং ল্যামিনেশন অপশন নিশ্চিত করা
     default_opts = [
         ("box_type", "Tuck End Box (সুইডিশ বোর্ড স্ট্যান্ডার্ড)", 0.0),
         ("box_type", "Mailer Box (ই-কমার্স প্রিমিয়াম লক)", 0.50),
@@ -171,11 +192,11 @@ def init_db():
         ("printing", "Single Color Brand Print", 1200.0),
         ("printing", "No Print (Plain Box)", 500.0),
     ]
-    c.executemany(
-        "INSERT OR IGNORE INTO custom_options "
-        "(category, option_name, rate) VALUES (?, ?, ?)",
-        default_opts
-    )
+    for cat, oname, rt in default_opts:
+        c.execute(
+            "INSERT OR IGNORE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)",
+            (cat, oname, rt)
+        )
 
     c.execute("SELECT COUNT(*) FROM catalog")
     if c.fetchone()[0] == 0:
@@ -214,12 +235,13 @@ def init_db():
              "Rigid Luxury Gift Box", "350 GSM Art Card",
              "Matte Lamination (ম্যাট ফিনিশ)", "Single Color Brand Print", 8.5, 4.5, 2.0, 10)
         ]
-        c.executemany("""
-            INSERT INTO catalog (
-                title, code, img_path, box_type, material,
-                finish, printing, length, width, height, clicks
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, default_catalog)
+        for item in default_catalog:
+            c.execute("""
+                INSERT INTO catalog (
+                    title, code, img_path, box_type, material,
+                    finish, printing, length, width, height, clicks
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, item)
 
     c.execute("SELECT COUNT(*) FROM customers")
     if c.fetchone()[0] == 0:
@@ -227,10 +249,8 @@ def init_db():
             ("01711000001", "Aarong Artisan", "1234", "2026-10-01", 2),
             ("01819000002", "Glow Cosmetics BD", "1234", "2026-10-15", 1)
         ]
-        c.executemany(
-            "INSERT OR IGNORE INTO customers VALUES (?,?,?,?,?)",
-            demo_custs
-        )
+        for dc in demo_custs:
+            c.execute("INSERT OR IGNORE INTO customers VALUES (?,?,?,?,?)", dc)
 
     c.execute("SELECT COUNT(*) FROM orders")
     if c.fetchone()[0] == 0:
@@ -251,15 +271,15 @@ def init_db():
              500, 14.0, 7000.0, 0.0, 0.0, 7000.0, 5100.0, 1900.0,
              "No File", "Asked for price quote", "Quotation")
         ]
-        c.executemany(
-            "INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            demo_orders
-        )
+        for do in demo_orders:
+            c.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", do)
 
     conn.commit()
     conn.close()
 
-init_db()
+if "db_initialized" not in st.session_state:
+    init_db()
+    st.session_state.db_initialized = True
 
 def get_stat(key, default="0"):
     conn = get_conn()
@@ -271,37 +291,25 @@ def get_stat(key, default="0"):
 
 def set_stat(key, val):
     conn = get_conn()
-    conn.execute(
-        "INSERT OR REPLACE INTO site_stats VALUES (?, ?)",
-        (key, str(val))
-    )
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO site_stats VALUES (?, ?)", (key, str(val)))
     conn.commit()
     conn.close()
 
 def get_options_dict(category):
-    conn = get_conn()
-    q = "SELECT option_name, rate FROM custom_options WHERE category=? ORDER BY id ASC"
-    df = pd.read_sql_query(q, conn, params=(category,))
-    conn.close()
+    df = run_query("SELECT option_name, rate FROM custom_options WHERE category=? ORDER BY id ASC", (category,))
+    if df.empty:
+        return {}
     return dict(zip(df["option_name"], df["rate"]))
 
 def get_all_options_df():
-    conn = get_conn()
-    df = pd.read_sql_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category, id ASC", conn)
-    conn.close()
-    return df
+    return run_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category, id ASC")
 
 def get_catalog_df():
-    conn = get_conn()
-    df = pd.read_sql_query("SELECT * FROM catalog ORDER BY id ASC", conn)
-    conn.close()
-    return df
+    return run_query("SELECT * FROM catalog ORDER BY id ASC")
 
 def get_orders_df():
-    conn = get_conn()
-    df = pd.read_sql_query("SELECT * FROM orders ORDER BY date DESC", conn)
-    conn.close()
-    return df
+    return run_query("SELECT * FROM orders ORDER BY date DESC")
 
 def check_returning_customer(phone_str):
     if not phone_str or len(phone_str.strip()) < 6:
@@ -337,7 +345,7 @@ def check_returning_customer(phone_str):
 
 def render_img_src(img_path):
     p = str(img_path)
-    if p.startswith("http"):
+    if p.startswith("http") or p.startswith("data:image"):
         return p
     if os.path.exists(p):
         with open(p, "rb") as f:
@@ -491,7 +499,6 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 
-/* ওয়েবসাইটের ওপরের GitHub আইকন, Share বাটন, Edit ও Streamlit মেনু সম্পূর্ণ লুকানোর কোড */
 [data-testid="stToolbar"],
 [data-testid="stToolbarActions"],
 [data-testid="stHeaderActionElements"],
@@ -550,7 +557,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     transform: scale(1.05);
 }
 
-/* ভাষা পরিবর্তনের রেডিও বাটনকে লোগো ও টাইটেলের ঠিক নিচে মাঝখানে সুন্দর পিল আকারে দেখানো */
 div[data-testid="stRadio"] {
     display: flex;
     justify-content: center;
@@ -588,7 +594,6 @@ div[data-testid="stRadio"] > div[role="radiogroup"] {
     transform: translateY(-2px);
 }
 
-/* ফ্লোটিং WhatsApp এবং Facebook বাটন (bottom: 70px) */
 .floating-social-bar {
     position: fixed;
     bottom: 70px;
@@ -818,14 +823,12 @@ mat_options = list(mat_dict.keys())
 finish_options = list(finish_dict.keys())
 print_options = list(print_dict.keys())
 
-# কন্টাক্ট, ঠিকানা ও ফেসবুক ডাটা লোড
 fb_url = get_stat("fb_page_url", "https://www.facebook.com/packxebec")
 msg_url = get_stat("fb_messenger_url", "https://m.me/packxebec")
 fac_phone = get_stat("factory_phone", "01776008987")
 fac_addr = get_stat("factory_address", "102 Agasadek Road, Dhaka-1000")
 fac_email = get_stat("factory_email", "contact@packxebec.com")
 
-# বাজার দর ওঠানামার ডাইনামিক ভেরিয়েবল লোড (Backend Market Multipliers)
 board_market_adj_pct = float(get_stat("board_market_adj_pct", "0.0"))
 lam_market_adj_pct = float(get_stat("lam_market_adj_pct", "0.0"))
 base_making_cost_val = float(get_stat("base_making_cost", "1.50"))
@@ -838,7 +841,7 @@ board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
 lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
 
 # ==========================================================
-# ৪. BRAND LOGO & TITLE BANNER + LANGUAGE SWITCHER DIRECTLY UNDERNEATH
+# ৪. BRAND LOGO & TITLE BANNER + LANGUAGE SWITCHER
 # ==========================================================
 st.markdown(
     f'<div class="hero-logo-banner">'
@@ -857,7 +860,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# লোগো এবং টাইটেলের ঠিক নিচেই মাঝখানে ভাষা পরিবর্তনের অপশন
 lang_choice = st.radio(
     "🌐 Language / ভাষা:",
     ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
@@ -897,13 +899,11 @@ if not st.session_state.admin_logged_in:
                     st.rerun()
 
             with st.expander(tr("📜 আপনার পূর্ববর্তী অর্ডারের রেকর্ড দেখুন", "📜 View Your Previous Order Records")):
-                conn = get_conn()
-                my_ords = pd.read_sql_query(
+                my_ords = run_query(
                     "SELECT order_id, date, box_type, dimensions, quantity, total_price, discount_saved, paid_amount, due_amount, design_file, status "
                     "FROM orders WHERE phone=? ORDER BY date DESC",
-                    conn, params=(u["phone"],)
+                    (u["phone"],)
                 )
-                conn.close()
                 if not my_ords.empty:
                     st.dataframe(my_ords, use_container_width=True)
         else:
@@ -941,7 +941,8 @@ if not st.session_state.admin_logged_in:
                     if st.button(tr("অ্যাকাউন্ট তৈরি করুন", "Create Account"), key="rbtn"):
                         if r_name.strip() and r_phone.strip() and r_pass.strip():
                             conn = get_conn()
-                            conn.execute(
+                            c = conn.cursor()
+                            c.execute(
                                 "INSERT OR REPLACE INTO customers VALUES (?, ?, ?, ?, 1)",
                                 (r_phone.strip(), r_name.strip(), r_pass.strip(), datetime.now().strftime("%Y-%m-%d"))
                             )
@@ -963,7 +964,7 @@ if not st.session_state.admin_logged_in:
                             c.execute("SELECT name FROM customers WHERE phone=?", (fp_phone.strip(),))
                             row = c.fetchone()
                             if row:
-                                conn.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
+                                c.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
                                 conn.commit()
                                 st.success(tr("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।", "✅ Password reset successfully! Please login from the Member Login tab."))
                             else:
@@ -995,7 +996,8 @@ if not st.session_state.admin_logged_in:
                 )
                 if st.button("✨ Select & Customize", key=f"cbtn_{item['id']}"):
                     conn = get_conn()
-                    conn.execute("UPDATE catalog SET clicks = clicks + 1 WHERE id=?", (item["id"],))
+                    c = conn.cursor()
+                    c.execute("UPDATE catalog SET clicks = clicks + 1 WHERE id=?", (item["id"],))
                     conn.commit()
                     conn.close()
                     set_stat("order_clicks", int(get_stat("order_clicks", "203")) + 1)
@@ -1106,9 +1108,6 @@ if not st.session_state.admin_logged_in:
         advance_pay = st.number_input(tr("অ্যাডভান্স পেমেন্ট (যদি থাকে - BDT)", "Advance Payment (If any - BDT)"), min_value=0.0, value=0.0, step=500.0)
         cust_notes = st.text_area(tr("কাস্টম রিকোয়ারমেন্ট বা ডিজাইন পরিবর্তনের নির্দেশনা (ঐচ্ছিক)", "Custom Requirements or Design Instructions (Optional)"), height=70)
 
-        # ==========================================================
-        # ডাইনামিক প্রাইসিং ইঞ্জিন (ব্যাকএন্ড বাজার দরের সাথে সংযুক্ত)
-        # ==========================================================
         surface_area = 2 * ((length * width) + (length * height) + (width * height)) * wastage_allowance_val
         effective_mat_rate = mat_dict.get(material, 0.045) * board_market_mult
         effective_lam_rate = finish_dict.get(finish, 0.015) * lam_market_mult
@@ -1175,7 +1174,8 @@ if not st.session_state.admin_logged_in:
                 final_notes = f"[{discount_reason or 'New Order'}] {cust_notes}".strip()
 
                 conn = get_conn()
-                conn.execute(
+                c = conn.cursor()
+                c.execute(
                     "INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
                         order_id, datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -1186,7 +1186,7 @@ if not st.session_state.admin_logged_in:
                         estimated_profit, saved_design_name, final_notes, status_val
                     )
                 )
-                conn.execute(
+                c.execute(
                     "INSERT OR IGNORE INTO customers VALUES (?, ?, '1234', ?, 1)",
                     (cust_phone.strip(), cust_name.strip(), datetime.now().strftime("%Y-%m-%d"))
                 )
@@ -1244,6 +1244,10 @@ else:
             "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
             "### 🔐 packxebec — Admin Backend & ERP Control Panel"
         ))
+        if is_cloud_db_active():
+            st.success("☁️ Cloud Persistent Database Active (Turso) — ডাটা স্থায়ীভাবে সেভ হচ্ছে!")
+        else:
+            st.warning("⚠️ Local Temporary Database Active — ক্লাউড ডাটাবেস কানেক্ট করলে রিবুট হলেও ডাটা হারাবে না।")
     with top_adm2:
         if st.button(tr("🚪 অ্যাডমিন থেকে বের হন (Back to Customer Site)", "🚪 Exit Admin (Back to Customer Site)")):
             st.session_state.admin_logged_in = False
@@ -1359,9 +1363,6 @@ else:
                 f'</div></div>', unsafe_allow_html=True
             )
 
-    # ==========================================================
-    # নতুন আপডেটেড: বাজার দর, বোর্ড, ফ্লুট, করুগেটেড, ডুপ্লেক্স ও ল্যামিনেশন রেট কন্ট্রোলার
-    # ==========================================================
     elif "Categories" in admin_page or "ক্যাটাগরি" in admin_page or "Market" in admin_page:
         st.markdown(tr(
             "### 📈 কাঁচামালের বাজার দর ও রেট কন্ট্রোলার (Board, Flute, Corrugated, Duplex & Lamination)",
@@ -1377,16 +1378,11 @@ else:
         all_opts_df = get_all_options_df()
 
         with m_tab1:
-            st.markdown(tr(
-                "💡 **নির্দেশনা:** বাজারে যেকোনো বোর্ড, ফ্লুট পেপার, করুগেটেড শিট, ডুপ্লেক্স বোর্ড বা ল্যামিনেশনের দাম কমলে বা বাড়লে নিচের তালিকা থেকে সিলেক্ট করে নতুন রেট বসিয়ে **Save** করুন। সাথে সাথে কাস্টমার ক্যালকুলেটরে বক্সের দাম আপডেট হয়ে যাবে।",
-                "💡 **Instruction:** Select any board, flute paper, corrugated sheet, duplex board, or lamination below to update its rate instantly."
-            ))
-
             cat_labels = {
-                "material": tr("📄 বোর্ড, ফ্লুট পেপার, করুগেটেড শিট ও ডুপ্লেক্স বোর্ড (Material - প্রতি বর্গ ইঞ্চি রেট)", "📄 Boards, Flute, Corrugated & Duplex (Rate per sq.in)"),
-                "finish": tr("✨ ল্যামিনেশন ও ফয়েল ফিনিশিং (Lamination - প্রতি বর্গ ইঞ্চি রেট)", "✨ Lamination & Foil Finishing (Rate per sq.in)"),
-                "printing": tr("🎨 প্রিন্টিং ও ডাই/প্লেট সেটআপ চার্জ (Printing & Die Setup - ফিক্সড BDT)", "🎨 Printing & Die/Plate Setup Charge (Fixed BDT)"),
-                "box_type": tr("📦 বক্সের স্টাইল ও অতিরিক্ত মেকিং রেট (Box Style Extra Cost - প্রতি পিস BDT)", "📦 Box Style Extra Making Cost (Per Box BDT)")
+                "material": tr("📄 বোর্ড, ফ্লুট পেপার, করুগেটেড শিট ও ডুপ্লেক্স বোর্ড (Material)", "📄 Boards, Flute, Corrugated & Duplex (Rate per sq.in)"),
+                "finish": tr("✨ ল্যামিনেশন ও ফয়েল ফিনিশিং (Lamination)", "✨ Lamination & Foil Finishing (Rate per sq.in)"),
+                "printing": tr("🎨 প্রিন্টিং ও ডাই/প্লেট সেটআপ চার্জ (Printing & Die Setup)", "🎨 Printing & Die/Plate Setup Charge (Fixed BDT)"),
+                "box_type": tr("📦 বক্সের স্টাইল ও অতিরিক্ত মেকিং রেট (Box Style Extra Cost)", "📦 Box Style Extra Making Cost (Per Box BDT)")
             }
 
             sel_cat_filter = st.selectbox(
@@ -1435,7 +1431,8 @@ else:
                 with b_col1:
                     if st.button(tr("💾 নতুন দাম সেভ করুন (Update Rate)", "💾 Save Updated Rate"), key="upd_rate_btn"):
                         conn = get_conn()
-                        conn.execute(
+                        c = conn.cursor()
+                        c.execute(
                             "UPDATE custom_options SET rate=? WHERE option_name=? AND category=?",
                             (new_rate_val, sel_item_name, sel_cat_filter)
                         )
@@ -1447,22 +1444,14 @@ else:
                 with b_col2:
                     if len(opt_list) > 1 and st.button(tr("🗑️ এই অপশনটি ডিলিট করুন", "🗑️ Delete This Option"), key="del_opt_btn"):
                         conn = get_conn()
-                        conn.execute("DELETE FROM custom_options WHERE option_name=? AND category=?", (sel_item_name, sel_cat_filter))
+                        c = conn.cursor()
+                        c.execute("DELETE FROM custom_options WHERE option_name=? AND category=?", (sel_item_name, sel_cat_filter))
                         conn.commit()
                         conn.close()
                         st.warning(tr("অপশনটি ডিলিট করা হয়েছে।", "Option deleted."))
                         st.rerun()
 
         with m_tab2:
-            st.markdown(tr(
-                "#### ⚡ এক ক্লিকে পুরো বাজারের দাম বাড়ান বা কমান (Global Market Index & Margin)",
-                "#### ⚡ One-Click Global Market Adjustment & Profit Margin"
-            ))
-            st.caption(tr(
-                "বাজারে হঠাৎ সব কাগজের (Board/Flute/Duplex/Corrugated) বা ল্যামিনেশনের দাম শতকরা (%) হারে বেড়ে বা কমে গেলে এখানে পার্সেন্টেজ সেট করুন। যেমন: +10% দিলে সব বোর্ডের দাম ১০% বেড়ে যাবে, আর -5% দিলে ৫% কমে যাবে।",
-                "Adjust all board/paper or lamination prices globally by percentage (%) when the wholesale market fluctuates."
-            ))
-
             with st.form("global_market_form"):
                 gm1, gm2 = st.columns(2)
                 new_board_pct = gm1.slider(
@@ -1494,18 +1483,18 @@ else:
                     st.rerun()
 
         with m_tab3:
-            st.markdown(tr("#### ➕ নতুন বোর্ড, ফ্লুট, করুগেটেড শিট বা ল্যামিনেশন যুক্ত করুন", "#### ➕ Add New Board, Flute, Corrugated Sheet or Lamination"))
             with st.form("cat_form"):
                 cat_ch = st.selectbox(
                     tr("ক্যাটাগরি সিলেক্ট করুন", "Select Category"),
                     ["material", "finish", "printing", "box_type"],
                     format_func=lambda x: cat_labels.get(x, x)
                 )
-                oname = st.text_input(tr("নতুন অপশনের নাম * (যেমন: 400 GSM Swedish Board / B-Flute Sheet)", "New Option Name *"))
+                oname = st.text_input(tr("নতুন অপশনের নাম *", "New Option Name *"))
                 orate = st.number_input(tr("বেস রেট (BDT)", "Base Rate (BDT)"), min_value=0.0, value=0.050, step=0.005, format="%.4f")
                 if st.form_submit_button(tr("➕ ডাটাবেজে যোগ করুন", "➕ Add to Database")) and oname.strip():
                     conn = get_conn()
-                    conn.execute("INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)", (cat_ch, oname.strip(), orate))
+                    c = conn.cursor()
+                    c.execute("INSERT OR REPLACE INTO custom_options (category, option_name, rate) VALUES (?, ?, ?)", (cat_ch, oname.strip(), orate))
                     conn.commit()
                     conn.close()
                     st.success(tr(f"✅ '{oname}' সফলভাবে যুক্ত হয়েছে!", f"✅ '{oname}' added successfully!"))
@@ -1527,7 +1516,8 @@ else:
             c3.write("")
             if c3.button(tr("🔄 স্ট্যাটাস আপডেট করুন", "🔄 Update Status")):
                 conn = get_conn()
-                conn.execute("UPDATE orders SET status=? WHERE order_id=?", (new_st, sel_ord))
+                c = conn.cursor()
+                c.execute("UPDATE orders SET status=? WHERE order_id=?", (new_st, sel_ord))
                 conn.commit()
                 conn.close()
                 st.success(tr("✅ স্ট্যাটাস আপডেট হয়েছে!", "✅ Status updated!"))
@@ -1535,9 +1525,7 @@ else:
 
     elif "Customers" in admin_page or "কাস্টমার" in admin_page:
         st.markdown(tr("### 👥 রেজিস্টার্ড কাস্টমার রেকর্ড ও পাসওয়ার্ড রিসেট", "### 👥 Registered Customers & Password Reset"))
-        conn = get_conn()
-        cust_df = pd.read_sql_query("SELECT phone, name, password, join_date, total_orders FROM customers", conn)
-        conn.close()
+        cust_df = run_query("SELECT phone, name, password, join_date, total_orders FROM customers")
         st.dataframe(cust_df, use_container_width=True)
 
         if not orders_df.empty:
@@ -1562,7 +1550,8 @@ else:
             if st.button(tr("✅ পেমেন্ট আপডেট করুন", "✅ Update Payment")):
                 new_due = max(0.0, float(cur_row["total_price"]) - new_pay)
                 conn = get_conn()
-                conn.execute("UPDATE orders SET paid_amount=?, due_amount=? WHERE order_id=?", (new_pay, new_due, pay_ord))
+                c = conn.cursor()
+                c.execute("UPDATE orders SET paid_amount=?, due_amount=? WHERE order_id=?", (new_pay, new_due, pay_ord))
                 conn.commit()
                 conn.close()
                 st.success(tr("🎉 পেমেন্ট আপডেট হয়েছে!", "🎉 Payment updated!"))
@@ -1591,15 +1580,14 @@ else:
                     if new_title.strip():
                         saved_path = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"
                         if up_file is not None:
-                            ext = os.path.splitext(up_file.name)[1]
-                            fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-                            saved_path = os.path.join("product_images", fname)
-                            with open(saved_path, "wb") as f:
-                                f.write(up_file.getbuffer())
+                            b64_img = base64.b64encode(up_file.getvalue()).decode()
+                            mime = "image/png" if up_file.name.lower().endswith(".png") else "image/jpeg"
+                            saved_path = f"data:{mime};base64,{b64_img}"
                         elif or_url.strip():
                             saved_path = or_url.strip()
                         conn = get_conn()
-                        conn.execute("""
+                        c = conn.cursor()
+                        c.execute("""
                             INSERT INTO catalog (title, code, img_path, box_type, material, finish, printing, length, width, height, clicks)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                         """, (new_title, new_code or "PX-Custom", saved_path, g_box, g_mat, g_fin, g_prt, g_l, g_w, g_h))
@@ -1615,20 +1603,20 @@ else:
                 sel_id = bmap[sel_lbl]
                 rep_photo = st.file_uploader(tr("নতুন ছবি আপলোড করুন:", "Upload Replacement Photo:"), type=["jpg", "jpeg", "png", "webp"], key="rep_up")
                 if st.button(tr("📸 ছবিটি আপডেট করুন", "📸 Update Photo")) and rep_photo is not None:
-                    ext = os.path.splitext(rep_photo.name)[1]
-                    fname = f"box_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-                    fpath = os.path.join("product_images", fname)
-                    with open(fpath, "wb") as f:
-                        f.write(rep_photo.getbuffer())
+                    b64_img = base64.b64encode(rep_photo.getvalue()).decode()
+                    mime = "image/png" if rep_photo.name.lower().endswith(".png") else "image/jpeg"
+                    data_uri = f"data:{mime};base64,{b64_img}"
                     conn = get_conn()
-                    conn.execute("UPDATE catalog SET img_path=? WHERE id=?", (fpath, sel_id))
+                    c = conn.cursor()
+                    c.execute("UPDATE catalog SET img_path=? WHERE id=?", (data_uri, sel_id))
                     conn.commit()
                     conn.close()
                     st.success(tr("✅ ছবি পরিবর্তন হয়েছে!", "✅ Photo updated!"))
                     st.rerun()
                 if st.button(tr("🗑️ এই প্রোডাক্টটি ডিলিট করুন", "🗑️ Delete This Product")):
                     conn = get_conn()
-                    conn.execute("DELETE FROM catalog WHERE id=?", (sel_id,))
+                    c = conn.cursor()
+                    c.execute("DELETE FROM catalog WHERE id=?", (sel_id,))
                     conn.commit()
                     conn.close()
                     st.rerun()
