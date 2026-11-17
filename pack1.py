@@ -471,8 +471,6 @@ if "cust_user" not in st.session_state:
     st.session_state.cust_user = None
 if "show_cust_panel" not in st.session_state:
     st.session_state.show_cust_panel = False
-if "show_adm_panel" not in st.session_state:
-    st.session_state.show_adm_panel = False
 
 def tr(bn_text, en_text):
     return en_text if st.session_state.get("lang_mode") == "EN" else bn_text
@@ -508,7 +506,6 @@ HORIZONTAL_LOGO_PARTS = [
     '<stop offset="50%" stop-color="#c084fc"/>',
     '<stop offset="100%" stop-color="#f43f5e"/></linearGradient>',
     '</defs>',
-    # লোগো আইকন (packXebec এর p এর ঠিক বাম পাশে)
     '<g transform="translate(-15, 2) scale(0.34)" fill="#f8fafc">',
     '<path d="M 248 25 C 254 25, 258 30, 263 40 L 285 82 ',
     'C 287 87, 285 93, 279 96 L 264 105 C 258 108, 254 103, 252 97 ',
@@ -526,7 +523,6 @@ HORIZONTAL_LOGO_PARTS = [
     'L 165 290 L 184 290 L 230 173 C 235 163, 241 158, 248 158 Z ',
     'M 248 196 L 206 288 L 292 288 Z ',
     'M 326 266 L 317 282 L 333 306 L 345 298 Z"/></g>',
-    # packXebec ওয়ার্ডমার্ক
     '<text x="142" y="88" font-family="Arial Black, sans-serif" ',
     'font-weight="900" font-size="78" fill="#ffffff" ',
     'letter-spacing="-2">pack</text>',
@@ -576,7 +572,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. CSS: CLEAN FLAT HEADER (NO BAR / NO NEON LINE) + SLEEK PILLS
+# ৩. CSS: CLEAN FLAT HEADER + MATCHING DARK PILLS
 # ==========================================================
 st.markdown("""
 <style>
@@ -621,7 +617,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 600 !important;
 }
 
-/* ক্লিন ফ্ল্যাট হেডার (কোনো বার বা নিয়োন লাইন ছাড়া) */
 .clean-hero-wrap {
     text-align: center;
     padding: 8px 10px 6px 10px;
@@ -644,32 +639,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 500;
     letter-spacing: 0.2px;
     margin-bottom: 4px;
-}
-
-/* ওপরের নেভিগেশন রো-এর বাটনগুলোকে স্লিক ডার্ক পিল স্টাইলে দেখানো */
-div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] {
-    align-items: center !important;
-    margin-top: 4px !important;
-    margin-bottom: 14px !important;
-}
-div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] div.stButton > button {
-    background: rgba(30, 41, 59, 0.72) !important;
-    color: #f8fafc !important;
-    border: 1px solid rgba(148, 163, 184, 0.28) !important;
-    border-radius: 999px !important;
-    padding: 0.36rem 0.85rem !important;
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    min-height: 36px !important;
-    height: 36px !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
-    transition: all 0.22s ease !important;
-}
-div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
-    border-color: #ec4899 !important;
-    background: rgba(37, 99, 235, 0.24) !important;
-    transform: translateY(-1px) !important;
 }
 
 .social-pill {
@@ -904,6 +873,28 @@ div.stButton > button, div[data-testid="stFormSubmitButton"] > button {
     font-weight: 700 !important;
     width: 100%;
 }
+
+/* টপ নেভিগেশন বাটনগুলোকে (কাস্টমার প্যানেল ও বাং | ENG) একদম ছবির মতো ডার্ক পিল স্টাইলে রাখা */
+div[data-testid="stButton"] > button[kind="primary"] {
+    background: rgba(30, 41, 59, 0.72) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    border-radius: 999px !important;
+    padding: 0.32rem 0.9rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    transition: all 0.22s ease !important;
+}
+div[data-testid="stButton"] > button[kind="primary"]:hover {
+    border-color: #ec4899 !important;
+    background: rgba(37, 99, 235, 0.24) !important;
+    transform: translateY(-1px) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -935,7 +926,7 @@ board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
 lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
 
 # ==========================================================
-# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + SINGLE ROW NAV & LANG)
+# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + SINGLE ROW CENTERED PILLS)
 # ==========================================================
 st.markdown(
     f'<div class="clean-hero-wrap">'
@@ -947,84 +938,56 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown('<div class="top-nav-marker"></div>', unsafe_allow_html=True)
-nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([1.3, 1.35, 4.45, 0.95], gap="small")
-
-with nav_c1:
-    cust_btn_lbl = (
-        f"👑 {st.session_state.cust_user['name'][:11]}"
-        if st.session_state.cust_user
-        else tr("👤 কাস্টমার প্যানেল", "👤 Customer Panel")
-    )
-    if st.button(cust_btn_lbl, key="top_cust_panel_btn"):
-        if st.session_state.admin_logged_in:
-            st.session_state.admin_logged_in = False
-        st.session_state.show_cust_panel = not st.session_state.show_cust_panel
-        st.session_state.show_adm_panel = False
-        st.rerun()
-
-with nav_c2:
-    adm_btn_lbl = (
-        tr("🚪 অ্যাডমিন লগআউট", "🚪 Exit Admin")
-        if st.session_state.admin_logged_in
-        else tr("⚙️ অ্যাডমিন পোর্টাল", "⚙️ Admin Portal")
-    )
-    if st.button(adm_btn_lbl, key="top_adm_panel_btn"):
-        if st.session_state.admin_logged_in:
-            st.session_state.admin_logged_in = False
-            st.session_state.show_adm_panel = False
-        else:
-            st.session_state.show_adm_panel = not st.session_state.show_adm_panel
-            st.session_state.show_cust_panel = False
-        st.rerun()
-
-with nav_c3:
-    st.markdown(
-        f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
-        f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
-        f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
-        f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
-        f'<span class="social-pill">📍 {fac_addr}</span>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-with nav_c4:
-    lang_btn_lbl = "🌐 বাং | ENG"
-    if st.button(lang_btn_lbl, key="top_lang_toggle_btn"):
-        st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
-        st.rerun()
-
-# হেডার থেকে অ্যাডমিন পোর্টাল লগইন ড্রপডাউন (টগল করলে খুলবে)
-if st.session_state.show_adm_panel and not st.session_state.admin_logged_in:
-    with st.container():
-        st.markdown('<div class="dark-glass-card" style="padding:16px 20px;">', unsafe_allow_html=True)
-        ac1, ac2, ac3 = st.columns([2, 1, 0.6])
-        adm_pw_top = ac1.text_input(
-            tr("🔐 অ্যাডমিন পাসওয়ার্ড দিন:", "🔐 Enter Admin Password:"),
-            type="password",
-            key="top_adm_pw_input",
-            label_visibility="collapsed",
-            placeholder=tr("অ্যাডমিন পাসওয়ার্ড লিখুন...", "Enter Admin Password...")
+if not st.session_state.admin_logged_in:
+    # কাস্টমার পেজে: [👤 কাস্টমার প্যানেল] [Facebook] [WhatsApp] [Messenger] [Address] [🌐 বাং | ENG]
+    sp_l, nav_c1, nav_c2, nav_c3, sp_r = st.columns([0.55, 1.25, 4.45, 0.95, 0.55], gap="small")
+    with nav_c1:
+        cust_btn_lbl = (
+            f"👑 {st.session_state.cust_user['name'][:11]}"
+            if st.session_state.cust_user
+            else tr("👤 কাস্টমার প্যানেল", "👤 Customer Panel")
         )
-        if ac2.button(tr("🔑 ব্যাকএন্ড লগইন", "🔑 Login Backend"), key="top_adm_login_submit"):
-            real_adm_pw = get_stat("admin_password", "admin123")
-            if adm_pw_top == real_adm_pw:
-                st.session_state.admin_logged_in = True
-                st.session_state.show_adm_panel = False
-                st.rerun()
-            else:
-                st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
-        if ac3.button("✖", key="close_adm_panel_btn"):
-            st.session_state.show_adm_panel = False
+        if st.button(cust_btn_lbl, key="top_cust_panel_btn", type="primary"):
+            st.session_state.show_cust_panel = not st.session_state.show_cust_panel
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+
+    with nav_c2:
+        st.markdown(
+            f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
+            f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
+            f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
+            f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
+            f'<span class="social-pill">📍 {fac_addr}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+    with nav_c3:
+        if st.button("🌐 বাং | ENG", key="top_lang_toggle_btn", type="primary"):
+            st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
+            st.rerun()
+else:
+    # অ্যাডমিন ব্যাকএন্ডে কাস্টমার প্যানেল বাদ দেওয়া হয়েছে
+    sp_l, nav_c2, nav_c3, sp_r = st.columns([1.0, 4.6, 1.0, 1.0], gap="small")
+    with nav_c2:
+        st.markdown(
+            f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
+            f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
+            f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
+            f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
+            f'<span class="social-pill">📍 {fac_addr}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with nav_c3:
+        if st.button("🌐 বাং | ENG", key="top_lang_toggle_adm_btn", type="primary"):
+            st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
+            st.rerun()
 
 # ==========================================================
 # PART A: CUSTOMER STUDIO
 # ==========================================================
 if not st.session_state.admin_logged_in:
-    # হেডারের '👤 কাস্টমার প্যানেল' বাটনে ক্লিক করলে প্যানেল ওপেন হবে
     if get_stat("enable_customer_login", "1") == "1" and st.session_state.show_cust_panel:
         if st.session_state.cust_user:
             u = st.session_state.cust_user
@@ -1391,10 +1354,16 @@ if not st.session_state.admin_logged_in:
 # PART B: ADMIN BACKEND
 # ==========================================================
 else:
-    st.markdown(tr(
-        "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
-        "### 🔐 packxebec — Admin Backend & ERP Control Panel"
-    ))
+    top_adm1, top_adm2 = st.columns([3, 1])
+    with top_adm1:
+        st.markdown(tr(
+            "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
+            "### 🔐 packxebec — Admin Backend & ERP Control Panel"
+        ))
+    with top_adm2:
+        if st.button(tr("🚪 অ্যাডমিন থেকে বের হন (Back to Customer Site)", "🚪 Exit Admin (Back to Customer Site)")):
+            st.session_state.admin_logged_in = False
+            st.rerun()
 
     menu_items = [
         tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard"),
@@ -1881,12 +1850,25 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown(
-    f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7; text-align:center;">'
-    f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
-    f'📍 {fac_addr} &nbsp;|&nbsp; '
-    f'<a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">{WA_ICON_SVG}{fac_phone}</a> &nbsp;|&nbsp; '
-    f'<a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">{FB_ICON_SVG}facebook.com/packxebec</a>'
-    f'</div>',
-    unsafe_allow_html=True
-)
+f_col1, f_col2 = st.columns([3, 1])
+with f_col1:
+    st.markdown(
+        f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7;">'
+        f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
+        f'📍 {fac_addr} &nbsp;|&nbsp; '
+        f'<a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">{WA_ICON_SVG}{fac_phone}</a> &nbsp;|&nbsp; '
+        f'<a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">{FB_ICON_SVG}facebook.com/packxebec</a>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+with f_col2:
+    if not st.session_state.admin_logged_in:
+        with st.expander("🔐 Staff ERP Portal"):
+            adm_pw = st.text_input("Admin Password", type="password", key="footer_adm_pw")
+            if st.button("Login to Backend"):
+                real_adm_pw = get_stat("admin_password", "admin123")
+                if adm_pw == real_adm_pw:
+                    st.session_state.admin_logged_in = True
+                    st.rerun()
+                else:
+                    st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
