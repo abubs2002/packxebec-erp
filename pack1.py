@@ -511,50 +511,8 @@ def fmt_opt(val):
     return cleaned if cleaned else s
 
 # ==========================================================
-# ২. HORIZONTAL BRAND LOGO (TIGHT MOBILE & DESKTOP SPACING) & SOCIAL SVG ICONS
+# ২. SOCIAL SVG ICONS
 # ==========================================================
-HORIZONTAL_LOGO_PARTS = [
-    '<svg viewBox="0 0 620 120" xmlns="http://www.w3.org/2000/svg">',
-    '<defs>',
-    '<linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">',
-    '<stop offset="0%" stop-color="#f43f5e"/>',
-    '<stop offset="50%" stop-color="#a855f7"/>',
-    '<stop offset="100%" stop-color="#38bdf8"/></linearGradient>',
-    '<linearGradient id="g2" x1="100%" y1="0%" x2="0%" y2="100%">',
-    '<stop offset="0%" stop-color="#38bdf8"/>',
-    '<stop offset="50%" stop-color="#c084fc"/>',
-    '<stop offset="100%" stop-color="#f43f5e"/></linearGradient>',
-    '</defs>',
-    '<g transform="translate(-5, 2) scale(0.34)" fill="#f8fafc">',
-    '<path d="M 248 25 C 254 25, 258 30, 263 40 L 285 82 ',
-    'C 287 87, 285 93, 279 96 L 264 105 C 258 108, 254 103, 252 97 ',
-    'C 249 91, 244 93, 244 100 C 244 114, 260 122, 272 115 L 292 102 ',
-    'C 297 99, 302 102, 305 108 L 346 188 C 350 197, 344 206, 334 206 ',
-    'L 317 206 C 310 206, 306 201, 302 193 L 272 135 L 225 135 ',
-    'L 185 215 C 181 223, 174 227, 165 227 L 150 227 ',
-    'C 140 227, 135 218, 140 208 L 234 35 C 238 28, 243 25, 248 25 Z"/>',
-    '<path fill-rule="evenodd" d="M 248 158 C 256 158, 263 163, 269 173 ',
-    'L 302 228 C 309 238, 318 242, 330 242 C 356 242, 382 258, 386 286 ',
-    'C 388 300, 381 318, 372 325 L 202 325 C 197 325, 194 321, 193 315 ',
-    'L 190 302 C 188 292, 176 290, 172 298 C 169 304, 172 315, 175 322 ',
-    'C 177 325, 174 325, 168 325 L 132 325 C 122 325, 113 310, 113 295 ',
-    'C 113 274, 128 256, 152 256 L 170 256 C 176 256, 178 263, 175 270 ',
-    'L 165 290 L 184 290 L 230 173 C 235 163, 241 158, 248 158 Z ',
-    'M 248 196 L 206 288 L 292 288 Z ',
-    'M 326 266 L 317 282 L 333 306 L 345 298 Z"/></g>',
-    '<text x="340" y="88" text-anchor="end" font-family="Arial Black, sans-serif" ',
-    'font-weight="900" font-size="78" fill="#ffffff" ',
-    'letter-spacing="-2">pack</text>',
-    '<g transform="translate(338, 32) scale(1.12)">',
-    '<polygon points="4,0 18,0 48,50 34,50" fill="url(#g1)"/>',
-    '<polygon points="48,0 34,0 4,50 18,50" fill="url(#g2)"/>',
-    '<polygon points="26,19 31,25 26,31 21,25" fill="#fff"/></g>',
-    '<text x="395" y="88" text-anchor="start" font-family="Arial Black, sans-serif" ',
-    'font-weight="900" font-size="78" fill="#ffffff" ',
-    'letter-spacing="-2">ebec</text></svg>'
-]
-LOGO_SRC = svg_to_b64("".join(HORIZONTAL_LOGO_PARTS))
-
 FB_ICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
     'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
@@ -642,15 +600,6 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     margin-bottom: 4px;
     background: transparent;
     border: none;
-}
-.clean-logo-img {
-    width: clamp(230px, 26vw, 330px);
-    height: auto;
-    margin-bottom: 6px;
-    transition: transform 0.25s ease;
-}
-.clean-logo-img:hover {
-    transform: scale(1.03);
 }
 .clean-subtitle {
     color: #cbd5e1;
@@ -963,11 +912,60 @@ ADMIN_MENU_LIST = [
 ]
 
 # ==========================================================
-# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + TIGHT CENTERED NAV ROW)
+# ৪. CLEAN FLAT HEADER (RESPONSIVE FLEX LOGO FOR PC & MOBILE)
 # ==========================================================
+BRAND_ICON_SVG = (
+    '<svg viewBox="108 20 284 310" xmlns="http://www.w3.org/2000/svg" '
+    'style="height:clamp(36px, 4.2vw, 50px); width:auto; flex-shrink:0;">'
+    '<g fill="#f8fafc">'
+    '<path d="M 248 25 C 254 25, 258 30, 263 40 L 285 82 '
+    'C 287 87, 285 93, 279 96 L 264 105 C 258 108, 254 103, 252 97 '
+    'C 249 91, 244 93, 244 100 C 244 114, 260 122, 272 115 L 292 102 '
+    'C 297 99, 302 102, 305 108 L 346 188 C 350 197, 344 206, 334 206 '
+    'L 317 206 C 310 206, 306 201, 302 193 L 272 135 L 225 135 '
+    'L 185 215 C 181 223, 174 227, 165 227 L 150 227 '
+    'C 140 227, 135 218, 140 208 L 234 35 C 238 28, 243 25, 248 25 Z"/>'
+    '<path fill-rule="evenodd" d="M 248 158 C 256 158, 263 163, 269 173 '
+    'L 302 228 C 309 238, 318 242, 330 242 C 356 242, 382 258, 386 286 '
+    'C 388 300, 381 318, 372 325 L 202 325 C 197 325, 194 321, 193 315 '
+    'L 190 302 C 188 292, 176 290, 172 298 C 169 304, 172 315, 175 322 '
+    'C 177 325, 174 325, 168 325 L 132 325 C 122 325, 113 310, 113 295 '
+    'C 113 274, 128 256, 152 256 L 170 256 C 176 256, 178 263, 175 270 '
+    'L 165 290 L 184 290 L 230 173 C 235 163, 241 158, 248 158 Z '
+    'M 248 196 L 206 288 L 292 288 Z '
+    'M 326 266 L 317 282 L 333 306 L 345 298 Z"/>'
+    '</g></svg>'
+)
+
+BRAND_X_SVG = (
+    '<svg viewBox="2 0 48 50" xmlns="http://www.w3.org/2000/svg" '
+    'style="height:0.76em; width:auto; display:inline-block; vertical-align:baseline; margin:0 1px; transform:translateY(0.03em);">'
+    '<defs>'
+    '<linearGradient id="pxg1" x1="0%" y1="0%" x2="100%" y2="100%">'
+    '<stop offset="0%" stop-color="#f43f5e"/>'
+    '<stop offset="50%" stop-color="#a855f7"/>'
+    '<stop offset="100%" stop-color="#38bdf8"/>'
+    '</linearGradient>'
+    '<linearGradient id="pxg2" x1="100%" y1="0%" x2="0%" y2="100%">'
+    '<stop offset="0%" stop-color="#38bdf8"/>'
+    '<stop offset="50%" stop-color="#c084fc"/>'
+    '<stop offset="100%" stop-color="#f43f5e"/>'
+    '</linearGradient>'
+    '</defs>'
+    '<polygon points="4,0 18,0 48,50 34,50" fill="url(#pxg1)"/>'
+    '<polygon points="48,0 34,0 4,50 18,50" fill="url(#pxg2)"/>'
+    '<polygon points="26,19 31,25 26,31 21,25" fill="#ffffff"/>'
+    '</svg>'
+)
+
 st.markdown(
     f'<div class="clean-hero-wrap">'
-    f'<img src="{LOGO_SRC}" class="clean-logo-img">'
+    f'<div style="display:inline-flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px;">'
+    f'{BRAND_ICON_SVG}'
+    f'<span style="font-family:\'Inter\', sans-serif; font-weight:900; font-size:clamp(2rem, 3.8vw, 2.85rem); '
+    f'color:#ffffff; letter-spacing:-1.5px; line-height:1; display:inline-flex; align-items:baseline;">'
+    f'pack{BRAND_X_SVG}ebec</span>'
+    f'</div>'
     f'<div class="clean-subtitle">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
     f'</div>'
