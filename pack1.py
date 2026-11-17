@@ -357,7 +357,7 @@ def init_db():
 
 init_db()
 
-# হাই-স্পিড ক্যাশড ডাটা ফাংশনসমূহ (প্রতি ৬০ সেকেন্ডে একবার লোড হবে)
+# হাই-স্পিড ক্যাশড ডাটা ফাংশনসমূহ
 @st.cache_data(ttl=60, show_spinner=False)
 def get_all_stats_cached():
     df = run_query("SELECT stat_key, stat_val FROM site_stats")
@@ -469,6 +469,10 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 if "cust_user" not in st.session_state:
     st.session_state.cust_user = None
+if "show_cust_panel" not in st.session_state:
+    st.session_state.show_cust_panel = False
+if "show_adm_panel" not in st.session_state:
+    st.session_state.show_adm_panel = False
 
 def tr(bn_text, en_text):
     return en_text if st.session_state.get("lang_mode") == "EN" else bn_text
@@ -490,10 +494,10 @@ def fmt_opt(val):
     return cleaned if cleaned else s
 
 # ==========================================================
-# ২. BRAND LOGO & OFFICIAL FACEBOOK / WHATSAPP / MESSENGER SVG ICONS
+# ২. HORIZONTAL BRAND LOGO (ICON LEFT OF packXebec) & SOCIAL SVG ICONS
 # ==========================================================
-DARK_LOGO_PARTS = [
-    '<svg viewBox="0 0 500 430" xmlns="http://www.w3.org/2000/svg">',
+HORIZONTAL_LOGO_PARTS = [
+    '<svg viewBox="0 0 620 120" xmlns="http://www.w3.org/2000/svg">',
     '<defs>',
     '<linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">',
     '<stop offset="0%" stop-color="#f43f5e"/>',
@@ -503,7 +507,9 @@ DARK_LOGO_PARTS = [
     '<stop offset="0%" stop-color="#38bdf8"/>',
     '<stop offset="50%" stop-color="#c084fc"/>',
     '<stop offset="100%" stop-color="#f43f5e"/></linearGradient>',
-    '</defs><g fill="#f8fafc">',
+    '</defs>',
+    # লোগো আইকন (packXebec এর p এর ঠিক বাম পাশে)
+    '<g transform="translate(-15, 2) scale(0.34)" fill="#f8fafc">',
     '<path d="M 248 25 C 254 25, 258 30, 263 40 L 285 82 ',
     'C 287 87, 285 93, 279 96 L 264 105 C 258 108, 254 103, 252 97 ',
     'C 249 91, 244 93, 244 100 C 244 114, 260 122, 272 115 L 292 102 ',
@@ -520,21 +526,22 @@ DARK_LOGO_PARTS = [
     'L 165 290 L 184 290 L 230 173 C 235 163, 241 158, 248 158 Z ',
     'M 248 196 L 206 288 L 292 288 Z ',
     'M 326 266 L 317 282 L 333 306 L 345 298 Z"/></g>',
-    '<text x="52" y="398" font-family="Arial Black, sans-serif" ',
-    'font-weight="900" font-size="68" fill="#ffffff" ',
+    # packXebec ওয়ার্ডমার্ক
+    '<text x="142" y="88" font-family="Arial Black, sans-serif" ',
+    'font-weight="900" font-size="78" fill="#ffffff" ',
     'letter-spacing="-2">pack</text>',
-    '<g transform="translate(234, 348)">',
+    '<g transform="translate(348, 32) scale(1.12)">',
     '<polygon points="4,0 18,0 48,50 34,50" fill="url(#g1)"/>',
     '<polygon points="48,0 34,0 4,50 18,50" fill="url(#g2)"/>',
     '<polygon points="26,19 31,25 26,31 21,25" fill="#fff"/></g>',
-    '<text x="286" y="398" font-family="Arial Black, sans-serif" ',
-    'font-weight="900" font-size="68" fill="#ffffff" ',
+    '<text x="408" y="88" font-family="Arial Black, sans-serif" ',
+    'font-weight="900" font-size="78" fill="#ffffff" ',
     'letter-spacing="-2">ebec</text></svg>'
 ]
-LOGO_SRC = svg_to_b64("".join(DARK_LOGO_PARTS))
+LOGO_SRC = svg_to_b64("".join(HORIZONTAL_LOGO_PARTS))
 
 FB_ICON_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
     'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
     '<circle cx="12" cy="12" r="12" fill="#1877F2"/>'
     '<path d="M15.12 12.6H13.2V19.5H10.35V12.6H8.95V10.15H10.35V8.55'
@@ -544,7 +551,7 @@ FB_ICON_SVG = (
 )
 
 WA_ICON_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
     'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
     '<circle cx="12" cy="12" r="12" fill="#25D366"/>'
     '<path d="M17.5 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15'
@@ -559,7 +566,7 @@ WA_ICON_SVG = (
 )
 
 MSG_ICON_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
     'style="vertical-align:middle; margin-right:5px; flex-shrink:0;">'
     '<circle cx="12" cy="12" r="12" fill="#0084FF"/>'
     '<path d="M12 5.5c-3.87 0-7 2.86-7 6.39 0 2.01 1.02 3.8 2.61 4.97V19.5'
@@ -569,7 +576,7 @@ MSG_ICON_SVG = (
 )
 
 # ==========================================================
-# ৩. CSS: GITHUB ICON HIDE + COMPACT LOGO + CENTERED LANGUAGE BAR
+# ৩. CSS: CLEAN FLAT HEADER (NO BAR / NO NEON LINE) + SLEEK PILLS
 # ==========================================================
 st.markdown("""
 <style>
@@ -580,7 +587,7 @@ html, body, [class*="css"] {
     color: #f8fafc;
 }
 .stApp {
-    background: radial-gradient(circle at top center, #1e1b4b 0%, #090d16 45%, #060911 100%);
+    background: radial-gradient(circle at top center, #131836 0%, #090d16 45%, #060911 100%);
     color: #f8fafc;
 }
 
@@ -600,7 +607,7 @@ header[data-testid="stHeader"] {
 }
 
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0.8rem !important;
     padding-bottom: 3rem !important;
 }
 
@@ -614,69 +621,78 @@ h1, h2, h3, h4, h5, label, .stMarkdown p, div[data-testid="stWidgetLabel"] p {
     font-weight: 600 !important;
 }
 
-.hero-logo-banner {
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(19, 28, 49, 0.95) 100%);
-    border: 1px solid #26334d;
-    border-radius: 18px;
-    padding: 16px 24px 14px 24px;
+/* ক্লিন ফ্ল্যাট হেডার (কোনো বার বা নিয়োন লাইন ছাড়া) */
+.clean-hero-wrap {
     text-align: center;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 8px;
+    padding: 8px 10px 6px 10px;
+    margin-bottom: 6px;
+    background: transparent;
+    border: none;
 }
-.hero-logo-banner::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
-}
-.hero-logo-img {
-    width: clamp(115px, 11vw, 150px);
+.clean-logo-img {
+    width: clamp(230px, 26vw, 330px);
     height: auto;
-    margin-bottom: 4px;
-    transition: transform 0.3s ease;
+    margin-bottom: 6px;
+    transition: transform 0.25s ease;
 }
-.hero-logo-img:hover {
-    transform: scale(1.05);
+.clean-logo-img:hover {
+    transform: scale(1.03);
+}
+.clean-subtitle {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    margin-bottom: 4px;
 }
 
-div[data-testid="stRadio"] {
-    display: flex;
-    justify-content: center;
-    margin-top: -2px;
-    margin-bottom: 12px;
+/* ওপরের নেভিগেশন রো-এর বাটনগুলোকে স্লিক ডার্ক পিল স্টাইলে দেখানো */
+div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+    margin-top: 4px !important;
+    margin-bottom: 14px !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid #334155;
-    padding: 6px 20px;
-    border-radius: 999px;
-    justify-content: center;
-    gap: 18px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] div.stButton > button {
+    background: rgba(30, 41, 59, 0.72) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    border-radius: 999px !important;
+    padding: 0.36rem 0.85rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    transition: all 0.22s ease !important;
+}
+div[data-testid="stElementContainer"]:has(.top-nav-marker) + div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
+    border-color: #ec4899 !important;
+    background: rgba(37, 99, 235, 0.24) !important;
+    transform: translateY(-1px) !important;
 }
 
 .social-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(30, 41, 59, 0.85);
+    gap: 3px;
+    background: rgba(30, 41, 59, 0.72);
     color: #f8fafc !important;
-    padding: 6px 15px;
+    padding: 6px 13px;
     border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid rgba(148, 163, 184, 0.28);
     text-decoration: none !important;
-    margin: 4px 5px;
+    margin: 2px 3px;
+    min-height: 36px;
+    box-sizing: border-box;
     transition: all 0.22s ease;
 }
 .social-pill:hover {
     border-color: #ec4899;
-    background: rgba(37, 99, 235, 0.25);
-    transform: translateY(-2px);
+    background: rgba(37, 99, 235, 0.24);
+    transform: translateY(-1px);
 }
 
 .floating-social-bar {
@@ -717,20 +733,13 @@ div[data-testid="stRadio"] > div[role="radiogroup"] {
 .dark-glass-card {
     background: linear-gradient(145deg, #0f172a 0%, #131c31 100%);
     color: #ffffff;
-    padding: 24px 26px;
+    padding: 22px 24px;
     border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
     border: 1px solid #26334d;
     position: relative;
     overflow: hidden;
-    margin-bottom: 20px;
-}
-.dark-glass-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+    margin-bottom: 18px;
 }
 
 .ov-card {
@@ -926,43 +935,97 @@ board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
 lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
 
 # ==========================================================
-# ৪. BRAND LOGO & TITLE BANNER + LANGUAGE SWITCHER
+# ৪. CLEAN FLAT HEADER (HORIZONTAL LOGO + SINGLE ROW NAV & LANG)
 # ==========================================================
 st.markdown(
-    f'<div class="hero-logo-banner">'
-    f'<img src="{LOGO_SRC}" class="hero-logo-img">'
-    f'<div style="color:#cbd5e1; font-size:0.92rem; font-weight:600; margin-bottom:10px;">'
+    f'<div class="clean-hero-wrap">'
+    f'<img src="{LOGO_SRC}" class="clean-logo-img">'
+    f'<div class="clean-subtitle">'
     f'Custom Packaging Configurator • 300 GSM Swedish Board • Direct Factory Printing'
-    f'</div>'
-    f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px;">'
-    f'<span class="live-badge">● Online Ordering Active</span>'
-    f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
-    f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
-    f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
-    f'<span class="social-pill">📍 {fac_addr}</span>'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True
 )
 
-lang_choice = st.radio(
-    "🌐 Language / ভাষা:",
-    ["🇧🇩 বাংলা (Default)", "🇬🇧 Full English"],
-    index=0 if st.session_state.lang_mode == "BN" else 1,
-    horizontal=True,
-    label_visibility="collapsed",
-    key="centered_under_logo_lang"
-)
-new_lang = "EN" if "English" in lang_choice else "BN"
-if new_lang != st.session_state.lang_mode:
-    st.session_state.lang_mode = new_lang
-    st.rerun()
+st.markdown('<div class="top-nav-marker"></div>', unsafe_allow_html=True)
+nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([1.3, 1.35, 4.45, 0.95], gap="small")
+
+with nav_c1:
+    cust_btn_lbl = (
+        f"👑 {st.session_state.cust_user['name'][:11]}"
+        if st.session_state.cust_user
+        else tr("👤 কাস্টমার প্যানেল", "👤 Customer Panel")
+    )
+    if st.button(cust_btn_lbl, key="top_cust_panel_btn"):
+        if st.session_state.admin_logged_in:
+            st.session_state.admin_logged_in = False
+        st.session_state.show_cust_panel = not st.session_state.show_cust_panel
+        st.session_state.show_adm_panel = False
+        st.rerun()
+
+with nav_c2:
+    adm_btn_lbl = (
+        tr("🚪 অ্যাডমিন লগআউট", "🚪 Exit Admin")
+        if st.session_state.admin_logged_in
+        else tr("⚙️ অ্যাডমিন পোর্টাল", "⚙️ Admin Portal")
+    )
+    if st.button(adm_btn_lbl, key="top_adm_panel_btn"):
+        if st.session_state.admin_logged_in:
+            st.session_state.admin_logged_in = False
+            st.session_state.show_adm_panel = False
+        else:
+            st.session_state.show_adm_panel = not st.session_state.show_adm_panel
+            st.session_state.show_cust_panel = False
+        st.rerun()
+
+with nav_c3:
+    st.markdown(
+        f'<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px;">'
+        f'<a href="{fb_url}" target="_blank" class="social-pill">{FB_ICON_SVG} Facebook Page</a>'
+        f'<a href="https://wa.me/88{fac_phone}" target="_blank" class="social-pill">{WA_ICON_SVG} WhatsApp: {fac_phone}</a>'
+        f'<a href="{msg_url}" target="_blank" class="social-pill">{MSG_ICON_SVG} Messenger</a>'
+        f'<span class="social-pill">📍 {fac_addr}</span>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+with nav_c4:
+    lang_btn_lbl = "🌐 বাং | ENG"
+    if st.button(lang_btn_lbl, key="top_lang_toggle_btn"):
+        st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
+        st.rerun()
+
+# হেডার থেকে অ্যাডমিন পোর্টাল লগইন ড্রপডাউন (টগল করলে খুলবে)
+if st.session_state.show_adm_panel and not st.session_state.admin_logged_in:
+    with st.container():
+        st.markdown('<div class="dark-glass-card" style="padding:16px 20px;">', unsafe_allow_html=True)
+        ac1, ac2, ac3 = st.columns([2, 1, 0.6])
+        adm_pw_top = ac1.text_input(
+            tr("🔐 অ্যাডমিন পাসওয়ার্ড দিন:", "🔐 Enter Admin Password:"),
+            type="password",
+            key="top_adm_pw_input",
+            label_visibility="collapsed",
+            placeholder=tr("অ্যাডমিন পাসওয়ার্ড লিখুন...", "Enter Admin Password...")
+        )
+        if ac2.button(tr("🔑 ব্যাকএন্ড লগইন", "🔑 Login Backend"), key="top_adm_login_submit"):
+            real_adm_pw = get_stat("admin_password", "admin123")
+            if adm_pw_top == real_adm_pw:
+                st.session_state.admin_logged_in = True
+                st.session_state.show_adm_panel = False
+                st.rerun()
+            else:
+                st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
+        if ac3.button("✖", key="close_adm_panel_btn"):
+            st.session_state.show_adm_panel = False
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================================
 # PART A: CUSTOMER STUDIO
 # ==========================================================
 if not st.session_state.admin_logged_in:
-    if get_stat("enable_customer_login", "1") == "1":
+    # হেডারের '👤 কাস্টমার প্যানেল' বাটনে ক্লিক করলে প্যানেল ওপেন হবে
+    if get_stat("enable_customer_login", "1") == "1" and st.session_state.show_cust_panel:
         if st.session_state.cust_user:
             u = st.session_state.cust_user
             c_top1, c_top2 = st.columns([3, 1])
@@ -981,82 +1044,87 @@ if not st.session_state.admin_logged_in:
             with c_top2:
                 if st.button(tr("🚪 কাস্টমার লগআউট", "🚪 Customer Logout")):
                     st.session_state.cust_user = None
+                    st.session_state.show_cust_panel = False
+                    st.rerun()
+                if st.button(tr("✖ প্যানেল বন্ধ করুন", "✖ Close Panel")):
+                    st.session_state.show_cust_panel = False
                     st.rerun()
 
-            with st.expander(tr("📜 আপনার পূর্ববর্তী অর্ডারের রেকর্ড দেখুন", "📜 View Your Previous Order Records")):
-                my_ords = run_query(
-                    "SELECT order_id, date, box_type, dimensions, quantity, total_price, discount_saved, paid_amount, due_amount, design_file, status "
-                    "FROM orders WHERE phone=? ORDER BY date DESC",
-                    (u["phone"],)
-                )
-                if not my_ords.empty:
-                    st.dataframe(my_ords, use_container_width=True)
+            my_ords = run_query(
+                "SELECT order_id, date, box_type, dimensions, quantity, total_price, discount_saved, paid_amount, due_amount, design_file, status "
+                "FROM orders WHERE phone=? ORDER BY date DESC",
+                (u["phone"],)
+            )
+            if not my_ords.empty:
+                st.markdown(tr("##### 📜 আপনার পূর্ববর্তী অর্ডারের রেকর্ড", "##### 📜 Your Previous Order Records"))
+                st.dataframe(my_ords, use_container_width=True)
         else:
-            with st.expander(tr("👤 কাস্টমার মেম্বার লগইন / রেজিস্ট্রেশন / পাসওয়ার্ড রিসেট", "👤 Customer Member Login / Register / Reset Password"), expanded=False):
-                auth_tab1, auth_tab2, auth_tab3 = st.tabs([
-                    tr("🔑 মেম্বার লগইন", "🔑 Member Login"),
-                    tr("➕ নতুন অ্যাকাউন্ট", "➕ Create Account"),
-                    tr("🔄 পাসওয়ার্ড ভুলে গেছেন?", "🔄 Forgot Password?")
-                ])
-                with auth_tab1:
-                    l_c1, l_c2 = st.columns(2)
-                    l_phone = l_c1.text_input(tr("মোবাইল নম্বর", "Mobile Number"), placeholder="01XXXXXXXXX", key="lp")
-                    l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", key="lps")
-                    if st.button(tr("লগইন করুন", "Login"), key="lbtn"):
+            st.markdown('<div class="dark-glass-card" style="padding:18px 22px;">', unsafe_allow_html=True)
+            auth_tab1, auth_tab2, auth_tab3 = st.tabs([
+                tr("🔑 মেম্বার লগইন", "🔑 Member Login"),
+                tr("➕ নতুন অ্যাকাউন্ট", "➕ Create Account"),
+                tr("🔄 পাসওয়ার্ড ভুলে গেছেন?", "🔄 Forgot Password?")
+            ])
+            with auth_tab1:
+                l_c1, l_c2 = st.columns(2)
+                l_phone = l_c1.text_input(tr("মোবাইল নম্বর", "Mobile Number"), placeholder="01XXXXXXXXX", key="lp")
+                l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", key="lps")
+                if st.button(tr("লগইন করুন", "Login"), key="lbtn"):
+                    conn = get_conn()
+                    c = conn.cursor()
+                    c.execute("SELECT name FROM customers WHERE phone=? AND password=?", (l_phone.strip(), l_pass.strip()))
+                    r = c.fetchone()
+                    conn.close()
+                    rec = check_returning_customer(l_phone.strip())
+                    if r or rec:
+                        st.session_state.cust_user = rec if rec else {
+                            "name": r[0], "phone": l_phone.strip(),
+                            "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0, "prev_dims": []
+                        }
+                        st.rerun()
+                    else:
+                        st.error(tr("❌ মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।", "❌ Invalid mobile number or password."))
+
+            with auth_tab2:
+                r_c1, r_c2, r_c3 = st.columns(3)
+                r_name = r_c1.text_input(tr("আপনার নাম / ব্র্যান্ডের নাম", "Your Name / Brand Name"), key="rn")
+                r_phone = r_c2.text_input(tr("মোবাইল নম্বর", "Mobile Number"), key="rp")
+                r_pass = r_c3.text_input(tr("পাসওয়ার্ড সেট করুন", "Set Password"), type="password", key="rps")
+                if st.button(tr("অ্যাকাউন্ট তৈরি করুন", "Create Account"), key="rbtn"):
+                    if r_name.strip() and r_phone.strip() and r_pass.strip():
                         conn = get_conn()
                         c = conn.cursor()
-                        c.execute("SELECT name FROM customers WHERE phone=? AND password=?", (l_phone.strip(), l_pass.strip()))
-                        r = c.fetchone()
+                        c.execute(
+                            "INSERT OR REPLACE INTO customers VALUES (?, ?, ?, ?, 1)",
+                            (r_phone.strip(), r_name.strip(), r_pass.strip(), datetime.now().strftime("%Y-%m-%d"))
+                        )
+                        conn.commit()
                         conn.close()
-                        rec = check_returning_customer(l_phone.strip())
-                        if r or rec:
-                            st.session_state.cust_user = rec if rec else {
-                                "name": r[0], "phone": l_phone.strip(),
-                                "order_count": 1, "total_billed": 0.0, "total_paid": 0.0, "total_due": 0.0, "prev_dims": []
-                            }
-                            st.rerun()
-                        else:
-                            st.error(tr("❌ মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।", "❌ Invalid mobile number or password."))
+                        st.session_state.cust_user = check_returning_customer(r_phone.strip())
+                        st.rerun()
+                    else:
+                        st.warning(tr("সবগুলো ঘর পূরণ করুন।", "Please fill in all fields."))
 
-                with auth_tab2:
-                    r_c1, r_c2, r_c3 = st.columns(3)
-                    r_name = r_c1.text_input(tr("আপনার নাম / ব্র্যান্ডের নাম", "Your Name / Brand Name"), key="rn")
-                    r_phone = r_c2.text_input(tr("মোবাইল নম্বর", "Mobile Number"), key="rp")
-                    r_pass = r_c3.text_input(tr("পাসওয়ার্ড সেট করুন", "Set Password"), type="password", key="rps")
-                    if st.button(tr("অ্যাকাউন্ট তৈরি করুন", "Create Account"), key="rbtn"):
-                        if r_name.strip() and r_phone.strip() and r_pass.strip():
-                            conn = get_conn()
-                            c = conn.cursor()
-                            c.execute(
-                                "INSERT OR REPLACE INTO customers VALUES (?, ?, ?, ?, 1)",
-                                (r_phone.strip(), r_name.strip(), r_pass.strip(), datetime.now().strftime("%Y-%m-%d"))
-                            )
+            with auth_tab3:
+                fp_c1, fp_c2 = st.columns(2)
+                fp_phone = fp_c1.text_input(tr("আপনার রেজিস্টার্ড মোবাইল নম্বর", "Your Registered Mobile Number"), key="fpp")
+                fp_new_pass = fp_c2.text_input(tr("নতুন পাসওয়ার্ড সেট করুন", "Set New Password"), type="password", key="fpnp")
+                if st.button(tr("🔄 পাসওয়ার্ড রিসেট করুন", "🔄 Reset Password"), key="fpbtn"):
+                    if fp_phone.strip() and len(fp_new_pass.strip()) >= 3:
+                        conn = get_conn()
+                        c = conn.cursor()
+                        c.execute("SELECT name FROM customers WHERE phone=?", (fp_phone.strip(),))
+                        row = c.fetchone()
+                        if row:
+                            c.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
                             conn.commit()
-                            conn.close()
-                            st.session_state.cust_user = check_returning_customer(r_phone.strip())
-                            st.rerun()
+                            st.success(tr("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।", "✅ Password reset successfully! Please login from the Member Login tab."))
                         else:
-                            st.warning(tr("সবগুলো ঘর পূরণ করুন।", "Please fill in all fields."))
-
-                with auth_tab3:
-                    fp_c1, fp_c2 = st.columns(2)
-                    fp_phone = fp_c1.text_input(tr("আপনার রেজিস্টার্ড মোবাইল নম্বর", "Your Registered Mobile Number"), key="fpp")
-                    fp_new_pass = fp_c2.text_input(tr("নতুন পাসওয়ার্ড সেট করুন", "Set New Password"), type="password", key="fpnp")
-                    if st.button(tr("🔄 পাসওয়ার্ড রিসেট করুন", "🔄 Reset Password"), key="fpbtn"):
-                        if fp_phone.strip() and len(fp_new_pass.strip()) >= 3:
-                            conn = get_conn()
-                            c = conn.cursor()
-                            c.execute("SELECT name FROM customers WHERE phone=?", (fp_phone.strip(),))
-                            row = c.fetchone()
-                            if row:
-                                c.execute("UPDATE customers SET password=? WHERE phone=?", (fp_new_pass.strip(), fp_phone.strip()))
-                                conn.commit()
-                                st.success(tr("✅ পাসওয়ার্ড সফলভাবে রিসেট হয়েছে! এখন মেম্বার লগইন ট্যাব থেকে লগইন করুন।", "✅ Password reset successfully! Please login from the Member Login tab."))
-                            else:
-                                st.error(tr("❌ এই মোবাইল নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।", "❌ No account found with this mobile number."))
-                            conn.close()
-                        else:
-                            st.warning(tr("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।", "Enter mobile number and a password of at least 3 characters."))
+                            st.error(tr("❌ এই মোবাইল নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।", "❌ No account found with this mobile number."))
+                        conn.close()
+                    else:
+                        st.warning(tr("মোবাইল নম্বর এবং অন্তত ৩ অক্ষরের নতুন পাসওয়ার্ড দিন।", "Enter mobile number and a password of at least 3 characters."))
+            st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(tr("### 🖼️ ১. রিয়েল প্রোডাক্ট স্যাম্পল গ্যালারি (Click to Customize)", "### 🖼️ 1. Real Product Sample Gallery (Click to Customize)"))
     catalog_df = get_catalog_df()
@@ -1323,16 +1391,10 @@ if not st.session_state.admin_logged_in:
 # PART B: ADMIN BACKEND
 # ==========================================================
 else:
-    top_adm1, top_adm2 = st.columns([3, 1])
-    with top_adm1:
-        st.markdown(tr(
-            "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
-            "### 🔐 packxebec — Admin Backend & ERP Control Panel"
-        ))
-    with top_adm2:
-        if st.button(tr("🚪 অ্যাডমিন থেকে বের হন (Back to Customer Site)", "🚪 Exit Admin (Back to Customer Site)")):
-            st.session_state.admin_logged_in = False
-            st.rerun()
+    st.markdown(tr(
+        "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
+        "### 🔐 packxebec — Admin Backend & ERP Control Panel"
+    ))
 
     menu_items = [
         tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard"),
@@ -1819,25 +1881,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-f_col1, f_col2 = st.columns([3, 1])
-with f_col1:
-    st.markdown(
-        f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7;">'
-        f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
-        f'📍 {fac_addr} &nbsp;|&nbsp; '
-        f'<a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">{WA_ICON_SVG}{fac_phone}</a> &nbsp;|&nbsp; '
-        f'<a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">{FB_ICON_SVG}facebook.com/packxebec</a>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-with f_col2:
-    if not st.session_state.admin_logged_in:
-        with st.expander("🔐 Staff ERP Portal"):
-            adm_pw = st.text_input("Admin Password", type="password", key="footer_adm_pw")
-            if st.button("Login to Backend"):
-                real_adm_pw = get_stat("admin_password", "admin123")
-                if adm_pw == real_adm_pw:
-                    st.session_state.admin_logged_in = True
-                    st.rerun()
-                else:
-                    st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
+st.markdown(
+    f'<div style="font-size:0.84rem; color:#94a3b8; line-height:1.7; text-align:center;">'
+    f'<strong style="color:#f8fafc;">© 2026 packxebec Custom Packaging Studio</strong> • All Rights Reserved & Licensed • 300 GSM Swedish Board Specialist<br>'
+    f'📍 {fac_addr} &nbsp;|&nbsp; '
+    f'<a href="https://wa.me/88{fac_phone}" target="_blank" style="color:#4ade80; text-decoration:none; font-weight:700;">{WA_ICON_SVG}{fac_phone}</a> &nbsp;|&nbsp; '
+    f'<a href="{fb_url}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:700;">{FB_ICON_SVG}facebook.com/packxebec</a>'
+    f'</div>',
+    unsafe_allow_html=True
+)
