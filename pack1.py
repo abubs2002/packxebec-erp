@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import sqlite3
 import requests
@@ -26,6 +27,22 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# অ্যাডমিন লগইন বা পেজ পরিবর্তনের পর অটোমেটিক একদম ওপরে স্ক্রল করা
+if st.session_state.get("scroll_to_top"):
+    components.html(
+        """
+        <script>
+            var main = window.parent.document.querySelector('section.main');
+            if (main) { main.scrollTo({top: 0, behavior: 'instant'}); }
+            var app = window.parent.document.querySelector('[data-testid="stAppViewContainer"]');
+            if (app) { app.scrollTo({top: 0, behavior: 'instant'}); }
+            window.parent.scrollTo(0, 0);
+        </script>
+        """,
+        height=0
+    )
+    st.session_state.scroll_to_top = False
 
 DB_NAME = "packxebec_erp_v4.db"
 
@@ -993,6 +1010,7 @@ else:
             for m_key, m_lbl in ADMIN_MENU_LIST:
                 if st.button(m_lbl, key=f"adm_nav_{m_key}", type="primary", use_container_width=True):
                     st.session_state.admin_menu_key = m_key
+                    st.session_state.scroll_to_top = True
                     st.rerun()
 
     with nav_s:
@@ -1006,6 +1024,7 @@ else:
     with nav_e:
         if st.button(tr("🚪 লগআউট", "🚪 Exit"), key="top_adm_exit_btn", type="primary"):
             st.session_state.admin_logged_in = False
+            st.session_state.scroll_to_top = True
             st.rerun()
 
 # ==========================================================
@@ -1869,6 +1888,7 @@ with f_col2:
                 real_adm_pw = get_stat("admin_password", "admin123")
                 if adm_pw == real_adm_pw:
                     st.session_state.admin_logged_in = True
+                    st.session_state.scroll_to_top = True
                     st.rerun()
                 else:
                     st.error(tr("❌ ভুল পাসওয়ার্ড!", "❌ Incorrect Password!"))
