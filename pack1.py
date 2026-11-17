@@ -494,7 +494,7 @@ def fmt_opt(val):
     return cleaned if cleaned else s
 
 # ==========================================================
-# ২. HORIZONTAL BRAND LOGO (ICON LEFT OF packXebec) & SOCIAL SVG ICONS
+# ২. HORIZONTAL BRAND LOGO (TIGHT MOBILE & DESKTOP SPACING) & SOCIAL SVG ICONS
 # ==========================================================
 HORIZONTAL_LOGO_PARTS = [
     '<svg viewBox="0 0 620 120" xmlns="http://www.w3.org/2000/svg">',
@@ -508,7 +508,7 @@ HORIZONTAL_LOGO_PARTS = [
     '<stop offset="50%" stop-color="#c084fc"/>',
     '<stop offset="100%" stop-color="#f43f5e"/></linearGradient>',
     '</defs>',
-    '<g transform="translate(-15, 2) scale(0.34)" fill="#f8fafc">',
+    '<g transform="translate(-5, 2) scale(0.34)" fill="#f8fafc">',
     '<path d="M 248 25 C 254 25, 258 30, 263 40 L 285 82 ',
     'C 287 87, 285 93, 279 96 L 264 105 C 258 108, 254 103, 252 97 ',
     'C 249 91, 244 93, 244 100 C 244 114, 260 122, 272 115 L 292 102 ',
@@ -525,14 +525,14 @@ HORIZONTAL_LOGO_PARTS = [
     'L 165 290 L 184 290 L 230 173 C 235 163, 241 158, 248 158 Z ',
     'M 248 196 L 206 288 L 292 288 Z ',
     'M 326 266 L 317 282 L 333 306 L 345 298 Z"/></g>',
-    '<text x="142" y="88" font-family="Arial Black, sans-serif" ',
+    '<text x="340" y="88" text-anchor="end" font-family="Arial Black, sans-serif" ',
     'font-weight="900" font-size="78" fill="#ffffff" ',
     'letter-spacing="-2">pack</text>',
-    '<g transform="translate(348, 32) scale(1.12)">',
+    '<g transform="translate(338, 32) scale(1.12)">',
     '<polygon points="4,0 18,0 48,50 34,50" fill="url(#g1)"/>',
     '<polygon points="48,0 34,0 4,50 18,50" fill="url(#g2)"/>',
     '<polygon points="26,19 31,25 26,31 21,25" fill="#fff"/></g>',
-    '<text x="408" y="88" font-family="Arial Black, sans-serif" ',
+    '<text x="395" y="88" text-anchor="start" font-family="Arial Black, sans-serif" ',
     'font-weight="900" font-size="78" fill="#ffffff" ',
     'letter-spacing="-2">ebec</text></svg>'
 ]
@@ -931,7 +931,6 @@ margin_b3k = float(get_stat("margin_bulk_3k", "18.0"))
 board_market_mult = 1.0 + (board_market_adj_pct / 100.0)
 lam_market_mult = 1.0 + (lam_market_adj_pct / 100.0)
 
-# অ্যাডমিন মেনু তালিকা (আইডি ও লেবেল)
 ADMIN_MENU_LIST = [
     ("overview", tr("💠 ওভারভিউ (Overview)", "💠 Overview Dashboard")),
     ("market", tr("🏷️ ক্যাটাগরি ও বাজার দর (Market Rates)", "🏷️ Categories & Market Rates")),
@@ -969,7 +968,6 @@ social_pills_html = (
 )
 
 if not st.session_state.admin_logged_in:
-    # কাস্টমার পেজে একদম মাঝখানে পাশাপাশি: [👤 কাস্টমার প্যানেল] [Social Pills] [🌐 বাং | ENG]
     sp_l, nav_c1, nav_c2, nav_c3, sp_r = st.columns([1.25, 1.15, 4.35, 0.95, 1.25], gap="small")
     with nav_c1:
         cust_btn_lbl = (
@@ -989,7 +987,6 @@ if not st.session_state.admin_logged_in:
             st.session_state.lang_mode = "EN" if st.session_state.lang_mode == "BN" else "BN"
             st.rerun()
 else:
-    # অ্যাডমিন প্যানেলে: [☰ মেনু] [Social Pills] [🌐 বাং | ENG] [🚪 লগআউট]
     sp_l, nav_m, nav_s, nav_l, nav_e, sp_r = st.columns([0.8, 0.85, 4.35, 0.95, 0.95, 0.8], gap="small")
     with nav_m:
         with st.popover(tr("☰ মেনু", "☰ Menu"), use_container_width=True):
@@ -1058,7 +1055,7 @@ if not st.session_state.admin_logged_in:
             with auth_tab1:
                 l_c1, l_c2 = st.columns(2)
                 l_phone = l_c1.text_input(tr("মোবাইল নম্বর", "Mobile Number"), placeholder="01XXXXXXXXX", key="lp")
-                l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", key="lps")
+                l_pass = l_c2.text_input(tr("পাসওয়ার্ড", "Password"), type="password", autocomplete="current-password", key="lps")
                 if st.button(tr("লগইন করুন", "Login"), key="lbtn"):
                     conn = get_conn()
                     c = conn.cursor()
@@ -1801,7 +1798,7 @@ else:
         with set_col2:
             st.markdown(tr("#### 🔐 অ্যাডমিন পাসওয়ার্ড পরিবর্তন করুন (Security)", "#### 🔐 Change Admin Password (Security)"))
             with st.form("change_admin_pw_form"):
-                cur_pw_input = st.text_input(tr("বর্তমান পাসওয়ার্ড দিন *", "Current Password *"), type="password")
+                cur_pw_input = st.text_input(tr("বর্তমান পাসওয়ার্ড দিন *", "Current Password *"), type="password", autocomplete="current-password")
                 new_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড দিন *", "New Password *"), type="password")
                 conf_pw_input = st.text_input(tr("নতুন পাসওয়ার্ড পুনরায় দিন *", "Confirm New Password *"), type="password")
 
@@ -1867,7 +1864,7 @@ with f_col1:
 with f_col2:
     if not st.session_state.admin_logged_in:
         with st.expander("🔐 Staff ERP Portal"):
-            adm_pw = st.text_input("Admin Password", type="password", key="footer_adm_pw")
+            adm_pw = st.text_input("Admin Password", type="password", autocomplete="current-password", key="footer_adm_pw")
             if st.button("Login to Backend"):
                 real_adm_pw = get_stat("admin_password", "admin123")
                 if adm_pw == real_adm_pw:
