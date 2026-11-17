@@ -1329,10 +1329,6 @@ else:
             "### 🔐 packxebec — অ্যাডমিন ব্যাকএন্ড ও ইআরপি কন্ট্রোল প্যানেল",
             "### 🔐 packxebec — Admin Backend & ERP Control Panel"
         ))
-        if is_cloud_db_active():
-            st.success("☁️ Cloud Persistent Database Active (Turso) — ডাটা স্থায়ীভাবে সেভ হচ্ছে!")
-        else:
-            st.warning("⚠️ Local Temporary Database Active — ক্লাউড ডাটাবেস কানেক্ট করলে রিবুট হলেও ডাটা হারাবে না।")
     with top_adm2:
         if st.button(tr("🚪 অ্যাডমিন থেকে বের হন (Back to Customer Site)", "🚪 Exit Admin (Back to Customer Site)")):
             st.session_state.admin_logged_in = False
