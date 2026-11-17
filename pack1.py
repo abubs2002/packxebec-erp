@@ -30,8 +30,12 @@ st.set_page_config(
 DB_NAME = "packxebec_erp_v4.db"
 
 # ==========================================================
-# ১. HYBRID PERSISTENT DATABASE ENGINE (TURSO HTTP + SQLITE FALLBACK)
+# ১. HIGH-SPEED PERSISTENT DATABASE ENGINE (TURSO HTTP + SQLITE FALLBACK)
 # ==========================================================
+@st.cache_resource
+def get_http_session():
+    return requests.Session()
+
 class TursoCursor:
     def __init__(self, url, token):
         self.url = url.replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
@@ -67,7 +71,8 @@ class TursoCursor:
             stmt["args"] = [self._encode_arg(p) for p in params]
         payload = {"requests": [{"type": "execute", "stmt": stmt}, {"type": "close"}]}
         headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
-        resp = requests.post(self.url, json=payload, headers=headers, timeout=15)
+        session = get_http_session()
+        resp = session.post(self.url, json=payload, headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         res0 = data["results"][0]
@@ -78,6 +83,9 @@ class TursoCursor:
         self.description = [(c["name"], None, None, None, None, None, None) for c in cols] if cols else None
         self._rows = [tuple(self._decode_cell(cell) for cell in row) for row in result.get("rows", [])]
         self._idx = 0
+
+        if sql.strip().upper().startswith(("INSERT", "UPDATE", "DELETE")):
+            st.cache_data.clear()
         return self
 
     def fetchone(self):
@@ -136,6 +144,7 @@ def run_query(query, params=()):
         return pd.DataFrame()
     return pd.DataFrame(rows, columns=cols)
 
+@st.cache_resource
 def init_db():
     conn = get_conn()
     c = conn.cursor()
@@ -344,18 +353,21 @@ def init_db():
 
     conn.commit()
     conn.close()
+    return True
 
-if "db_initialized" not in st.session_state:
-    init_db()
-    st.session_state.db_initialized = True
+init_db()
+
+# হাই-স্পিড ক্যাশড ডাটা ফাংশনসমূহ (প্রতি ৬০ সেকেন্ডে একবার লোড হবে)
+@st.cache_data(ttl=60, show_spinner=False)
+def get_all_stats_cached():
+    df = run_query("SELECT stat_key, stat_val FROM site_stats")
+    if df.empty:
+        return {}
+    return dict(zip(df["stat_key"], df["stat_val"]))
 
 def get_stat(key, default="0"):
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT stat_val FROM site_stats WHERE stat_key=?", (key,))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else default
+    stats = get_all_stats_cached()
+    return stats.get(key, default)
 
 def set_stat(key, val):
     conn = get_conn()
@@ -363,19 +375,24 @@ def set_stat(key, val):
     c.execute("INSERT OR REPLACE INTO site_stats VALUES (?, ?)", (key, str(val)))
     conn.commit()
     conn.close()
+    st.cache_data.clear()
 
-def get_options_dict(category):
-    df = run_query("SELECT option_name, rate FROM custom_options WHERE category=? ORDER BY id ASC", (category,))
-    if df.empty:
-        return {}
-    return dict(zip(df["option_name"], df["rate"]))
-
+@st.cache_data(ttl=60, show_spinner=False)
 def get_all_options_df():
     return run_query("SELECT id, category, option_name, rate FROM custom_options ORDER BY category, id ASC")
 
+def get_options_dict(category):
+    df = get_all_options_df()
+    if df.empty:
+        return {}
+    sub = df[df["category"] == category]
+    return dict(zip(sub["option_name"], sub["rate"]))
+
+@st.cache_data(ttl=60, show_spinner=False)
 def get_catalog_df():
     return run_query("SELECT * FROM catalog ORDER BY id ASC")
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_orders_df():
     return run_query("SELECT * FROM orders ORDER BY date DESC")
 
