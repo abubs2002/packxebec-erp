@@ -1,17 +1,11 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import requests
 from datetime import datetime
 import os
 import base64
 import re
-
-# ক্লাউড ডাটাবেস (Turso) সাপোর্টের জন্য অপশনাল ইমপোর্ট
-try:
-    import libsql_experimental as libsql
-    HAS_LIBSQL = True
-except ImportError:
-    HAS_LIBSQL = False
 
 # ফোল্ডার ও একবারের জন্য কনফিগ তৈরি
 os.makedirs(".streamlit", exist_ok=True)
@@ -36,24 +30,98 @@ st.set_page_config(
 DB_NAME = "packxebec_erp_v4.db"
 
 # ==========================================================
-# ১. HYBRID PERSISTENT DATABASE ENGINE (TURSO CLOUD + SQLITE FALLBACK)
+# ১. HYBRID PERSISTENT DATABASE ENGINE (TURSO HTTP + SQLITE FALLBACK)
 # ==========================================================
+class TursoCursor:
+    def __init__(self, url, token):
+        self.url = url.replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
+        self.token = token
+        self.description = None
+        self._rows = []
+        self._idx = 0
+
+    def _encode_arg(self, val):
+        if val is None:
+            return {"type": "null"}
+        if isinstance(val, bool):
+            return {"type": "integer", "value": "1" if val else "0"}
+        if isinstance(val, int):
+            return {"type": "integer", "value": str(val)}
+        if isinstance(val, float):
+            return {"type": "float", "value": float(val)}
+        return {"type": "text", "value": str(val)}
+
+    def _decode_cell(self, cell):
+        t = cell.get("type")
+        if t == "null":
+            return None
+        if t == "integer":
+            return int(cell["value"])
+        if t == "float":
+            return float(cell["value"])
+        return cell.get("value")
+
+    def execute(self, sql, params=()):
+        stmt = {"sql": sql}
+        if params:
+            stmt["args"] = [self._encode_arg(p) for p in params]
+        payload = {"requests": [{"type": "execute", "stmt": stmt}, {"type": "close"}]}
+        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+        resp = requests.post(self.url, json=payload, headers=headers, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        res0 = data["results"][0]
+        if res0.get("type") == "error":
+            raise RuntimeError(res0.get("error", {}).get("message", "Turso SQL Error"))
+        result = res0["response"]["result"]
+        cols = result.get("cols", [])
+        self.description = [(c["name"], None, None, None, None, None, None) for c in cols] if cols else None
+        self._rows = [tuple(self._decode_cell(cell) for cell in row) for row in result.get("rows", [])]
+        self._idx = 0
+        return self
+
+    def fetchone(self):
+        if self._idx < len(self._rows):
+            row = self._rows[self._idx]
+            self._idx += 1
+            return row
+        return None
+
+    def fetchall(self):
+        rows = self._rows[self._idx:]
+        self._idx = len(self._rows)
+        return rows
+
+class TursoConnection:
+    def __init__(self, url, token):
+        self.url = url
+        self.token = token
+
+    def cursor(self):
+        return TursoCursor(self.url, self.token)
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
 def is_cloud_db_active():
     try:
         return (
-            HAS_LIBSQL
-            and "TURSO_DATABASE_URL" in st.secrets
+            "TURSO_DATABASE_URL" in st.secrets
             and "TURSO_AUTH_TOKEN" in st.secrets
             and bool(st.secrets["TURSO_DATABASE_URL"].strip())
+            and bool(st.secrets["TURSO_AUTH_TOKEN"].strip())
         )
     except Exception:
         return False
 
 def get_conn():
     if is_cloud_db_active():
-        return libsql.connect(
-            database=st.secrets["TURSO_DATABASE_URL"].strip(),
-            auth_token=st.secrets["TURSO_AUTH_TOKEN"].strip()
+        return TursoConnection(
+            st.secrets["TURSO_DATABASE_URL"].strip(),
+            st.secrets["TURSO_AUTH_TOKEN"].strip()
         )
     return sqlite3.connect(DB_NAME, check_same_thread=False)
 
